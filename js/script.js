@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (targetElement) {
                 // Close mobile menu if open
-                UIkit.offcanvas('#offcanvas-nav').hide();
+                if (typeof UIkit !== 'undefined') {
+                    UIkit.offcanvas('#offcanvas-nav').hide();
+                }
                 
                 // Scroll to target
                 targetElement.scrollIntoView({
@@ -48,24 +50,32 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Validate form
             if (!name || !email || !message) {
-                UIkit.notification({
-                    message: 'Por favor completa todos los campos requeridos',
-                    status: 'warning',
-                    pos: 'top-right',
-                    timeout: 3000
-                });
+                if (typeof UIkit !== 'undefined') {
+                    UIkit.notification({
+                        message: 'Por favor completa todos los campos requeridos',
+                        status: 'warning',
+                        pos: 'top-right',
+                        timeout: 3000
+                    });
+                } else {
+                    alert('Por favor completa todos los campos requeridos');
+                }
                 return;
             }
             
             // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                UIkit.notification({
-                    message: 'Por favor ingresa un email válido',
-                    status: 'warning',
-                    pos: 'top-right',
-                    timeout: 3000
-                });
+                if (typeof UIkit !== 'undefined') {
+                    UIkit.notification({
+                        message: 'Por favor ingresa un email válido',
+                        status: 'warning',
+                        pos: 'top-right',
+                        timeout: 3000
+                    });
+                } else {
+                    alert('Por favor ingresa un email válido');
+                }
                 return;
             }
             
@@ -74,12 +84,16 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Form Data:', { name, email, phone, message });
             
             // Show success message
-            UIkit.notification({
-                message: '¡Mensaje enviado con éxito! Te contactaremos pronto.',
-                status: 'success',
-                pos: 'top-right',
-                timeout: 5000
-            });
+            if (typeof UIkit !== 'undefined') {
+                UIkit.notification({
+                    message: '¡Mensaje enviado con éxito! Te contactaremos pronto.',
+                    status: 'success',
+                    pos: 'top-right',
+                    timeout: 5000
+                });
+            } else {
+                alert('¡Mensaje enviado con éxito! Te contactaremos pronto.');
+            }
             
             // Reset form
             contactForm.reset();

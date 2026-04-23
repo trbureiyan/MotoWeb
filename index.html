@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOTOAPP</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏍</text></svg>" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import { h, render } from 'https://esm.sh/preact@10.19.2';
+    import { useState, useEffect, useRef } from 'https://esm.sh/preact@10.19.2/hooks';
+
+    /* ─── DESIGN TOKENS ──────────────────────────────────────── */
+    const T = {
+      bg0: '#0e0e0e',
+      bg1: '#121212',
+      bg2: '#1a1a1a',
+      bg3: '#222222',
+      border: '#2a2a2a',
+      orange: '#ff6200',
+      orangeDim: '#cc4e00',
+      orangeGlow: 'rgba(255,98,0,0.18)',
+      text: '#e8e8e8',
+      muted: '#888',
+      mono: "'Roboto Mono', monospace",
+      head: "'Montserrat', sans-serif",
+    };
+
+    /* ─── GLOBAL STYLES ────────────────────────────────────── */
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Roboto+Mono:wght@400;500;700&display=swap');
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      body {
+        background: #0e0e0e;
+        color: #e8e8e8;
+        font-family: 'Montserrat', sans-serif;
+        overflow-x: hidden;
+      }
+      ::selection { background: #ff6200; color: #000; }
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: #121212; }
+      ::-webkit-scrollbar-thumb { background: #ff6200; }
+
+      /* NAV */
+      .nav-root {
+        position: sticky; top: 0; z-index: 999;
+        background: rgba(14,14,14,0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid #2a2a2a;
+        padding: 0 2rem; height: 64px;
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .nav-logo {
+        font-family: 'Montserrat', sans-serif; font-weight: 900;
+        font-size: 1.35rem; letter-spacing: 0.12em; color: #ff6200;
+        text-decoration: none; text-transform: uppercase;
+      }
+      .nav-links { display: flex; gap: 2rem; list-style: none; }
+      .nav-links a {
+        font-family: 'Montserrat', sans-serif; font-size: 0.78rem; font-weight: 600;
+        letter-spacing: 0.14em; text-transform: uppercase; color: #888;
+        text-decoration: none; transition: color 0.2s;
+      }
+      .nav-links a:hover { color: #e8e8e8; }
+      @media (max-width: 640px) { .nav-links { display: none; } }
+
+      /* BUTTONS */
+      .btn-orange {
+        background: #ff6200; color: #000; border: none;
+        padding: 0.6rem 1.4rem; font-family: 'Montserrat', sans-serif;
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em;
+        text-transform: uppercase; cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
+        clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      }
+      .btn-orange:hover { background: #ff8a00; box-shadow: 0 0 20px rgba(255,98,0,0.18); }
+      .btn-orange:disabled { opacity: 0.4; cursor: not-allowed; }
+      .btn-outline {
+        background: transparent; color: #ff6200; border: 1px solid #ff6200;
+        padding: 0.6rem 1.4rem; font-family: 'Montserrat', sans-serif;
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em;
+        text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+      }
+      .btn-outline:hover { background: rgba(255,98,0,0.18); }
+
+      /* HERO */
+      .hero {
+        position: relative; min-height: 92vh;
+        display: flex; align-items: center; overflow: hidden;
+        padding: 6rem 2rem 4rem;
+      }
+      .hero-grid-bg {
+        position: absolute; inset: 0;
+        background-image: linear-gradient(rgba(255,98,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,98,0,0.04) 1px, transparent 1px);
+        background-size: 60px 60px; pointer-events: none;
+      }
+      .hero-glow {
+        position: absolute; top: -20%; right: -10%;
+        width: 600px; height: 600px;
+        background: radial-gradient(circle, rgba(255,98,0,0.12) 0%, transparent 70%);
+        pointer-events: none;
+      }
+      .hero-inner { position: relative; max-width: 900px; }
+      .hero-label {
+        font-family: 'Roboto Mono', monospace; font-size: 0.72rem; color: #ff6200;
+        letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 0.75rem;
+      }
+      .hero-label::before { content: ''; display: block; width: 32px; height: 1px; background: #ff6200; }
+      .hero-h1 {
+        font-family: 'Montserrat', sans-serif; font-size: clamp(3rem, 8vw, 7rem);
+        font-weight: 900; line-height: 0.9; text-transform: uppercase;
+        letter-spacing: -0.02em; margin-bottom: 1.5rem;
+      }
+      .hero-h1 span { color: #ff6200; }
+      .hero-sub { font-size: 1rem; color: #888; max-width: 520px; line-height: 1.7; margin-bottom: 2.5rem; }
+      .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+      .hero-stat-row {
+        position: absolute; bottom: 3rem; right: 2rem;
+        display: flex; gap: 3rem;
+      }
+      @media (max-width: 768px) { .hero-stat-row { position: relative; bottom: auto; right: auto; margin-top: 3rem; gap: 2rem; } }
+      .hero-stat-item { text-align: right; }
+      .hero-stat-value { font-family: 'Roboto Mono', monospace; font-size: 1.8rem; font-weight: 700; color: #ff6200; }
+      .hero-stat-label { font-size: 0.68rem; color: #888; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.15rem; }
+
+      /* SECTIONS */
+      .section { padding: 6rem 2rem; }
+      .section-inner { max-width: 1100px; margin: 0 auto; }
+      .section-label { font-family: 'Roboto Mono', monospace; font-size: 0.68rem; color: #ff6200; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 0.75rem; }
+      .section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
+      .section-title em { color: #ff6200; font-style: normal; }
+      .section-sub { color: #888; font-size: 0.9rem; margin-bottom: 3rem; max-width: 500px; line-height: 1.7; }
+      .divider { width: 48px; height: 2px; background: #ff6200; margin: 1rem 0 2rem; }
+
+      /* FLIP CARDS */
+      .flip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+      .flip-card { height: 380px; perspective: 1200px; cursor: pointer; }
+      .flip-inner {
+        position: relative; width: 100%; height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .flip-card:hover .flip-inner { transform: rotateY(180deg); }
+      .flip-front, .flip-back {
+        position: absolute; inset: 0;
+        backface-visibility: hidden; -webkit-backface-visibility: hidden;
+        border: 1px solid #2a2a2a;
+      }
+      .flip-front {
+        background: #1a1a1a;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem;
+      }
+      .flip-icon {
+        width: 64px; height: 64px; border-radius: 50%;
+        background: rgba(255,98,0,0.18); border: 1px solid rgba(255,98,0,0.3);
+        display: flex; align-items: center; justify-content: center; color: #ff6200;
+      }
+      .flip-title { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; }
+      .flip-hint { font-family: 'Roboto Mono', monospace; font-size: 0.65rem; color: #888; letter-spacing: 0.1em; }
+      .flip-back {
+        background: #222; transform: rotateY(180deg);
+        padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;
+        border-top: 2px solid #ff6200;
+      }
+      .flip-back-title { font-family: 'Roboto Mono', monospace; font-size: 0.7rem; color: #ff6200; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 1.25rem; }
+      .flip-specs { font-family: 'Roboto Mono', monospace; font-size: 0.78rem; color: #888; line-height: 2; }
+      .flip-specs span { color: #e8e8e8; }
+      .flip-price { font-family: 'Roboto Mono', monospace; font-size: 1.1rem; font-weight: 700; color: #ff6200; border-top: 1px solid #2a2a2a; padding-top: 1rem; margin-top: 1rem; }
+
+      /* BENTO */
+      .bento-grid { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: auto auto; gap: 1rem; }
+      @media (max-width: 768px) { .bento-grid { grid-template-columns: 1fr; } }
+      .bento-card {
+        background: #1a1a1a; border: 1px solid #2a2a2a; padding: 1.75rem;
+        position: relative; overflow: hidden;
+      }
+      .bento-card::before {
+        content: '"'; position: absolute; top: -0.5rem; left: 1.25rem;
+        font-size: 6rem; color: #ff6200; opacity: 0.08;
+        font-family: Georgia, serif; line-height: 1;
+      }
+      .bento-featured { grid-row: span 2; border-left: 2px solid #ff6200; }
+      .bento-quote { font-size: 0.9rem; line-height: 1.75; margin-bottom: 1.25rem; }
+      .bento-rider { display: flex; align-items: center; gap: 0.75rem; }
+      .bento-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, #ff6200, #cc4e00);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.85rem; color: #000; flex-shrink: 0;
+      }
+      .bento-name { font-weight: 700; font-size: 0.82rem; }
+      .bento-sub { font-family: 'Roboto Mono', monospace; font-size: 0.65rem; color: #888; }
+
+      /* METRICS */
+      .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #2a2a2a; border: 1px solid #2a2a2a; margin-top: 3rem; }
+      @media (max-width: 480px) { .metrics-row { grid-template-columns: 1fr; } }
+      .metric-cell { background: #1a1a1a; padding: 2.5rem 2rem; text-align: center; }
+      .metric-value { font-family: 'Roboto Mono', monospace; font-size: 3rem; font-weight: 700; color: #ff6200; line-height: 1; margin-bottom: 0.5rem; }
+      .metric-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.12em; }
+
+      /* GALLERY */
+      .gallery-masonry { columns: 3; column-gap: 1rem; }
+      @media (max-width: 768px) { .gallery-masonry { columns: 2; } }
+      @media (max-width: 480px) { .gallery-masonry { columns: 1; } }
+      .gal-item { break-inside: avoid; margin-bottom: 1rem; position: relative; overflow: hidden; cursor: pointer; }
+      .gal-item img { width: 100%; display: block; transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), filter 0.4s; filter: grayscale(20%); }
+      .gal-item:hover img { transform: scale(1.06); filter: grayscale(0%); }
+      .gal-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);
+        opacity: 0; transition: opacity 0.3s;
+        display: flex; align-items: flex-end; padding: 1rem;
+      }
+      .gal-item:hover .gal-overlay { opacity: 1; }
+      .gal-label { font-family: 'Roboto Mono', monospace; font-size: 0.7rem; color: #ff6200; letter-spacing: 0.1em; text-transform: uppercase; }
+
+      /* LIGHTBOX */
+      .lb-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+        z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem;
+        animation: fadeIn 0.2s ease;
+      }
+      .lb-content { position: relative; max-width: 90vw; max-height: 90vh; }
+      .lb-content img { max-width: 90vw; max-height: 85vh; object-fit: contain; display: block; }
+      .lb-close { position: absolute; top: -2rem; right: 0; background: none; border: none; color: #ff6200; font-size: 0.85rem; cursor: pointer; font-family: 'Roboto Mono', monospace; letter-spacing: 0.1em; }
+      .lb-caption { font-family: 'Roboto Mono', monospace; font-size: 0.72rem; color: #888; text-align: center; margin-top: 0.75rem; letter-spacing: 0.1em; }
+
+      /* CONTACT GRID */
+      .contact-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: start; }
+      @media (max-width: 768px) { .contact-grid { grid-template-columns: 1fr; } }
+
+      /* TERMINAL */
+      .term-wrap { background: #0a0a0a; border: 1px solid #2a2a2a; border-top: 2px solid #ff6200; overflow: hidden; }
+      .term-header { background: #1a1a1a; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid #2a2a2a; }
+      .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+      .term-title { font-family: 'Roboto Mono', monospace; font-size: 0.68rem; color: #888; margin-left: 0.5rem; letter-spacing: 0.1em; }
+      .term-prog { height: 2px; background: #2a2a2a; position: relative; }
+      .term-prog-fill { height: 100%; background: #ff6200; transition: width 0.4s ease; box-shadow: 0 0 8px #ff6200; }
+      .term-msgs {
+        padding: 1.25rem; min-height: 280px; max-height: 320px;
+        overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;
+        font-family: 'Roboto Mono', monospace; font-size: 0.75rem;
+      }
+      .term-msgs::-webkit-scrollbar { width: 2px; }
+      .term-msgs::-webkit-scrollbar-thumb { background: #ff6200; }
+      .msg-sys { color: #ff6200; }
+      .msg-sys::before { content: '> '; }
+      .msg-usr { color: #00e5ff; align-self: flex-end; }
+      .msg-usr::before { content: '$ '; }
+      .msg-dat { color: #4caf50; }
+      .msg-dat::before { content: '// '; }
+      .term-opts { display: flex; gap: 0.5rem; flex-wrap: wrap; padding: 0 1.25rem 1rem; }
+      .term-opt { font-family: 'Roboto Mono', monospace; font-size: 0.68rem; background: transparent; border: 1px solid #2a2a2a; color: #888; padding: 0.35rem 0.75rem; cursor: pointer; transition: all 0.15s; letter-spacing: 0.06em; }
+      .term-opt:hover { border-color: #ff6200; color: #ff6200; }
+      .term-input-row { border-top: 1px solid #2a2a2a; padding: 1rem 1.25rem; display: flex; gap: 0.75rem; }
+      .term-input { flex: 1; background: transparent; border: none; outline: none; font-family: 'Roboto Mono', monospace; font-size: 0.8rem; color: #e8e8e8; caret-color: #ff6200; }
+      .term-input::placeholder { color: #888; }
+      .term-send { background: #ff6200; border: none; color: #000; padding: 0.4rem 0.9rem; font-family: 'Roboto Mono', monospace; font-size: 0.7rem; font-weight: 700; cursor: pointer; letter-spacing: 0.08em; transition: background 0.2s; }
+      .term-send:hover { background: #ff8a00; }
+      .cursor-blink { display: inline-block; width: 7px; height: 13px; background: #ff6200; margin-left: 2px; animation: blink 1s step-end infinite; vertical-align: text-bottom; }
+
+      /* INFO */
+      .info-block { background: #1a1a1a; border: 1px solid #2a2a2a; padding: 2rem; }
+      .info-row { display: flex; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+      .info-item { flex: 1; min-width: 130px; }
+      .info-label { font-family: 'Roboto Mono', monospace; font-size: 0.62rem; color: #ff6200; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.5rem; }
+      .info-val { font-size: 0.85rem; line-height: 1.6; }
+      .info-val span { font-family: 'Roboto Mono', monospace; font-size: 0.78rem; color: #888; }
+      .contact-btns { display: flex; gap: 0.75rem; margin-top: 1.25rem; }
+      .cbtn { flex: 1; padding: 0.7rem; text-align: center; font-family: 'Roboto Mono', monospace; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border: none; }
+      .cbtn-wa { background: #25d366; color: #000; }
+      .cbtn-em { background: #222; color: #e8e8e8; border: 1px solid #2a2a2a; }
+      .cbtn-em:hover { border-color: #ff6200; color: #ff6200; }
+      .map-ph {
+        background: #222; border: 1px dashed #2a2a2a; height: 180px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem;
+        cursor: pointer; transition: border-color 0.2s; margin-top: 1.5rem;
+      }
+      .map-ph:hover { border-color: #ff6200; }
+      .map-ph-label { font-family: 'Roboto Mono', monospace; font-size: 0.7rem; color: #888; letter-spacing: 0.12em; text-transform: uppercase; }
+
+      /* MODAL */
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.88);
+        z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 1rem;
+        animation: fadeIn 0.2s ease;
+      }
+      .modal-box {
+        background: #121212; border: 1px solid #2a2a2a; border-top: 2px solid #ff6200;
+        width: 100%; max-width: 520px; padding: 2rem; position: relative;
+        max-height: 90vh; overflow-y: auto;
+      }
+      .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #888; cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+      .modal-close:hover { color: #ff6200; }
+      .modal-step-label { font-family: 'Roboto Mono', monospace; font-size: 0.65rem; color: #ff6200; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.5rem; }
+      .modal-title { font-size: 1.3rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+      .modal-sub { font-size: 0.8rem; color: #888; margin-bottom: 2rem; }
+      .modal-stepper { display: flex; gap: 4px; margin-bottom: 2rem; }
+      .step-dot { flex: 1; height: 3px; background: #2a2a2a; transition: background 0.3s; }
+      .step-dot.on { background: #ff6200; }
+      .brand-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+      .brand-btn { background: #1a1a1a; border: 1px solid #2a2a2a; color: #e8e8e8; padding: 0.9rem; text-align: center; font-family: 'Montserrat', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
+      .brand-btn:hover, .brand-btn.sel { border-color: #ff6200; color: #ff6200; background: rgba(255,98,0,0.18); }
+      .motivo-btn { background: #1a1a1a; border: 1px solid #2a2a2a; color: #e8e8e8; padding: 0.85rem 1rem; width: 100%; text-align: left; font-family: 'Montserrat', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all 0.15s; text-transform: uppercase; display: block; margin-bottom: 0.6rem; }
+      .motivo-btn:hover, .motivo-btn.sel { border-color: #ff6200; color: #ff6200; background: rgba(255,98,0,0.18); }
+      .m-input { width: 100%; background: #1a1a1a; border: 1px solid #2a2a2a; color: #e8e8e8; padding: 0.85rem 1rem; font-family: 'Roboto Mono', monospace; font-size: 0.82rem; outline: none; transition: border-color 0.2s; margin-bottom: 0.75rem; }
+      .m-input:focus { border-color: #ff6200; }
+      .m-input::placeholder { color: #888; }
+      .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+      .btn-back { background: none; border: 1px solid #2a2a2a; color: #888; padding: 0.6rem 1.2rem; font-family: 'Montserrat', sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+      .btn-back:hover { border-color: #888; color: #e8e8e8; }
+
+      /* FOOTER */
+      .footer { background: #121212; border-top: 1px solid #2a2a2a; padding: 4rem 2rem 2rem; }
+      .footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-bottom: 3rem; }
+      @media (max-width: 768px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
+      .footer-col-title { font-family: 'Roboto Mono', monospace; font-size: 0.65rem; color: #ff6200; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1rem; }
+      .footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+      .footer-links a { font-size: 0.82rem; color: #888; text-decoration: none; transition: color 0.2s; }
+      .footer-links a:hover { color: #ff6200; }
+      .social-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+      .social-btn { width: 36px; height: 36px; border: 1px solid #2a2a2a; background: #1a1a1a; display: flex; align-items: center; justify-content: center; color: #888; cursor: pointer; transition: all 0.2s; font-size: 0.75rem; font-weight: 700; }
+      .social-btn:hover { border-color: #ff6200; color: #ff6200; }
+      .nl-row { display: flex; margin-top: 0.5rem; }
+      .nl-input { flex: 1; background: #222; border: 1px solid #2a2a2a; border-right: none; color: #e8e8e8; padding: 0.65rem 0.9rem; font-family: 'Roboto Mono', monospace; font-size: 0.75rem; outline: none; }
+      .nl-input::placeholder { color: #888; }
+      .nl-btn { background: #ff6200; border: none; color: #000; padding: 0.65rem 1rem; font-family: 'Roboto Mono', monospace; font-size: 0.7rem; font-weight: 700; cursor: pointer; letter-spacing: 0.06em; transition: background 0.2s; }
+      .nl-btn:hover { background: #ff8a00; }
+      .footer-bottom { border-top: 1px solid #2a2a2a; padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+      .footer-copy { font-family: 'Roboto Mono', monospace; font-size: 0.68rem; color: #888; letter-spacing: 0.08em; }
+      .footer-mark { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.9rem; color: #ff6200; letter-spacing: 0.12em; }
+
+      .services-bg { background: #121212; }
+      .testimonials-bg { background: #0e0e0e; }
+      .gallery-bg { background: #1a1a1a; }
+      .contact-bg { background: #121212; }
+
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+      .animate-up { animation: slideUp 0.6s ease both; }
+    `;
+    document.head.appendChild(styleEl);
+
+    /* ─── SVG ICONS ──────────────────────────────────────────── */
+    const Wrench = () => h('svg', { width:28, height:28, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:'1.8', strokeLinecap:'round', strokeLinejoin:'round' },
+      h('path', { d:'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' })
+    );
+    const Gauge = () => h('svg', { width:28, height:28, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:'1.8', strokeLinecap:'round', strokeLinejoin:'round' },
+      h('path', { d:'M12 2a10 10 0 1 0 10 10' }),
+      h('path', { d:'M12 12 18 6' }),
+      h('circle', { cx:12, cy:12, r:2 })
+    );
+    const Disc = () => h('svg', { width:28, height:28, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:'1.8', strokeLinecap:'round', strokeLinejoin:'round' },
+      h('circle', { cx:12, cy:12, r:10 }),
+      h('circle', { cx:12, cy:12, r:3 }),
+      h('path', { d:'M12 9v-6M12 21v-6M9 12H3M21 12h-6' })
+    );
+    const RadarIcon = () => h('svg', { width:32, height:32, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:'1.5', strokeLinecap:'round' },
+      h('path', { d:'M5.5 5.5A8 8 0 0 1 19.5 19.5' }),
+      h('path', { d:'M2 2a14 14 0 0 1 20 20' }),
+      h('circle', { cx:12, cy:12, r:3 }),
+      h('circle', { cx:12, cy:12, r:0.5, fill:'currentColor' })
+    );
+    const XIcon = () => h('svg', { width:18, height:18, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round' },
+      h('line', { x1:18, y1:6, x2:6, y2:18 }),
+      h('line', { x1:6, y1:6, x2:18, y2:18 })
+    );
+    const ZoomIcon = () => h('svg', { width:14, height:14, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round' },
+      h('circle', { cx:11, cy:11, r:8 }),
+      h('line', { x1:21, y1:21, x2:16.65, y2:16.65 }),
+      h('line', { x1:11, y1:8, x2:11, y2:14 }),
+      h('line', { x1:8, y1:11, x2:14, y2:11 })
+    );
+
+    /* ─── NAVBAR ─────────────────────────────────────────────── */
+    function Navbar({ onBooking }) {
+      return h('nav', { class: 'nav-root' },
+        h('a', { class: 'nav-logo', href: '#' }, 'MOTOAPP'),
+        h('ul', { class: 'nav-links' },
+          h('li', null, h('a', { href: '#servicios' }, 'Servicios')),
+          h('li', null, h('a', { href: '#taller' }, 'El Taller')),
+          h('li', null, h('a', { href: '#contacto' }, 'Contacto')),
+        ),
+        h('button', { class: 'btn-orange', onClick: onBooking }, 'RESERVAR CITA')
+      );
+    }
+
+    /* ─── HERO ───────────────────────────────────────────────── */
+    function Hero({ onBooking }) {
+      return h('section', { class: 'hero' },
+        h('div', { class: 'hero-grid-bg' }),
+        h('div', { class: 'hero-glow' }),
+        h('div', { class: 'hero-inner animate-up' },
+          h('div', { class: 'hero-label' }, 'Neiva, Huila — Colombia'),
+          h('h1', { class: 'hero-h1' },
+            'PRECISIÓN.', h('br'), h('span', null, 'VELOCIDAD.'), h('br'), 'DOMINIO.'
+          ),
+          h('p', { class: 'hero-sub' }, 'Ingeniería de alto cilindraje para verdaderos entusiastas. Telemetría avanzada y tuning de élite en el corazón del sur de Colombia.'),
+          h('div', { class: 'hero-actions' },
+            h('button', { class: 'btn-orange', onClick: onBooking }, 'AGENDAR SERVICIO'),
+            h('a', { href: '#taller' }, h('button', { class: 'btn-outline' }, 'VER ESPECIFICACIONES'))
+          )
+        ),
+        h('div', { class: 'hero-stat-row' },
+          h('div', { class: 'hero-stat-item' }, h('div', { class: 'hero-stat-value' }, '+500'), h('div', { class: 'hero-stat-label' }, 'Mapeos')),
+          h('div', { class: 'hero-stat-item' }, h('div', { class: 'hero-stat-value' }, '15'), h('div', { class: 'hero-stat-label' }, 'Años')),
+          h('div', { class: 'hero-stat-item' }, h('div', { class: 'hero-stat-value' }, '300+'), h('div', { class: 'hero-stat-label' }, 'km/h'))
+        )
+      );
+    }
+
+    /* ─── FLIP CARD ──────────────────────────────────────────── */
+    const SERVICES = [
+      { icon: h(Wrench), title: 'Mantenimiento', hint: '// preventive & corrective', specs: [['Intervalo','5,000 km'],['Aceite','Sintético 10W-40'],['Filtros','K&N / OEM'],['Sincronización','Carburadores / TBI'],['Diagnóstico','ECU Scan']], base: '$180,000 COP' },
+      { icon: h(Gauge), title: 'Tuning', hint: '// performance mapping', specs: [['ECU','Remap avanzado'],['Potencia','+15–25% torque'],['Mapeo','Dyno + telemetría'],['Escape','Full system'],['Filtro','Aire de alto flujo']], base: '$350,000 COP' },
+      { icon: h(Disc), title: 'Frenos', hint: '// brake engineering', specs: [['Pastillas','Ferodo / Brembo'],['Discos','Flotantes / sólidos'],['Líquido','DOT 5.1 racing'],['Caliper','Overhaul completo'],['ABS','Calibración']], base: '$220,000 COP' },
+    ];
+
+    function FlipCard({ svc }) {
+      return h('div', { class: 'flip-card' },
+        h('div', { class: 'flip-inner' },
+          h('div', { class: 'flip-front' },
+            h('div', { class: 'flip-icon' }, svc.icon),
+            h('div', { class: 'flip-title' }, svc.title),
+            h('div', { class: 'flip-hint' }, svc.hint)
+          ),
+          h('div', { class: 'flip-back' },
+            h('div', null,
+              h('div', { class: 'flip-back-title' }, `ESPECIFICACIONES // ${svc.title.toUpperCase()}`),
+              h('div', { class: 'flip-specs' },
+                svc.specs.map(([k, v]) => h('div', { key: k }, `${k}: `, h('span', null, v)))
+              )
+            ),
+            h('div', { class: 'flip-price' }, `Base: ${svc.base}`)
+          )
+        )
+      );
+    }
+
+    function Servicios() {
+      return h('section', { class: 'section services-bg', id: 'servicios' },
+        h('div', { class: 'section-inner' },
+          h('div', { class: 'section-label' }, '// Capacidades del taller'),
+          h('h2', { class: 'section-title' }, 'NUESTROS ', h('em', null, 'SERVICIOS')),
+          h('div', { class: 'divider' }),
+          h('p', { class: 'section-sub' }, 'Precisión mecánica y telemetría avanzada. Explorando los límites del rendimiento en el corazón de Neiva.'),
+          h('div', { class: 'flip-grid' },
+            SERVICES.map(s => h(FlipCard, { key: s.title, svc: s }))
+          )
+        )
+      );
+    }
+
+    /* ─── COUNT UP ───────────────────────────────────────────── */
+    function useCountUp(target, duration = 1800) {
+      const [count, setCount] = useState(0);
+      const ref = useRef(null);
+      useEffect(() => {
+        const observer = new IntersectionObserver(entries => {
+          if (entries[0].isIntersecting) {
+            observer.disconnect();
+            let start = 0;
+            const step = target / (duration / 16);
+            const timer = setInterval(() => {
+              start += step;
+              if (start >= target) { setCount(target); clearInterval(timer); }
+              else setCount(Math.floor(start));
+            }, 16);
+          }
+        }, { threshold: 0.3 });
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+      }, [target]);
+      return [count, ref];
+    }
+
+    function MetricCell({ prefix = '', value, suffix = '', label }) {
+      const [count, ref] = useCountUp(value);
+      return h('div', { class: 'metric-cell', ref },
+        h('div', { class: 'metric-value' }, `${prefix}${count}${suffix}`),
+        h('div', { class: 'metric-label' }, label)
+      );
+    }
+
+    /* ─── TESTIMONIALS ───────────────────────────────────────── */
+    const TESTIMONIALS = [
+      { quote: 'El mejor tuning que le han hecho a mi moto. La respuesta en bajas revoluciones es increíble y la entrega de potencia lineal me quitó 2 segundos en el circuito.', name: 'Carlos M.', bike: 'Kawasaki ZX-10R', init: 'C', featured: true },
+      { quote: 'Mantenimiento impecable. Salen de aquí sin que nada quede al aire. Confíen en el taller para moto.', name: 'Andrés G.', bike: 'Yamaha R6', init: 'A' },
+      { quote: 'No le dejo mi moto a nadie más. El dyno muestra exactamente lo que le hacen a tu moto, pura transparencia y resultados reales en cada marcha.', name: 'Felipe G.', bike: 'BMW S1000RR', init: 'F' },
+    ];
+
+    function Testimonials() {
+      return h('section', { class: 'section testimonials-bg' },
+        h('div', { class: 'section-inner' },
+          h('div', { class: 'section-label' }, '// Lo que dicen nuestros pilotos'),
+          h('h2', { class: 'section-title' }, 'PRUEBA SOCIAL: ', h('em', null, 'TESTIMONIOS DEL PADDOCK')),
+          h('div', { class: 'divider' }),
+          h('div', { class: 'bento-grid' },
+            TESTIMONIALS.map((t, i) =>
+              h('div', { key: i, class: `bento-card${t.featured ? ' bento-featured' : ''}` },
+                h('p', { class: 'bento-quote' }, `"${t.quote}"`),
+                h('div', { class: 'bento-rider' },
+                  h('div', { class: 'bento-avatar' }, t.init),
+                  h('div', null,
+                    h('div', { class: 'bento-name' }, t.name),
+                    h('div', { class: 'bento-sub' }, t.bike)
+                  )
+                )
+              )
+            )
+          ),
+          h('div', { class: 'metrics-row' },
+            h(MetricCell, { prefix: '+', value: 500, label: 'Mapeos completados' }),
+            h(MetricCell, { value: 15, suffix: ' Años', label: 'De experiencia técnica' }),
+            h(MetricCell, { value: 300, suffix: 'km/h+', label: 'Velocidad máxima validada' })
+          )
+        )
+      );
+    }
+
+    /* ─── GALLERY ────────────────────────────────────────────── */
+    const GALLERY = [
+      { src: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', label: 'BMW S1000RR — Tuning ECU' },
+      { src: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=600&q=80', label: 'Yamaha R1 — Suspensión' },
+      { src: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&q=80', label: 'Kawasaki ZX-10R — Frenos' },
+      { src: 'https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=600&q=80', label: 'Ducati V4 — Mapeo Dyno' },
+      { src: 'https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?w=600&q=80', label: 'Honda CBR — Mantenimiento' },
+      { src: 'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=600&q=80', label: 'Suzuki GSX-R — Full Service' },
+    ];
+
+    function Gallery() {
+      const [lb, setLb] = useState(null);
+      return h('section', { class: 'section gallery-bg', id: 'taller' },
+        h('div', { class: 'section-inner' },
+          h('div', { class: 'section-label' }, '// Proyectos recientes'),
+          h('h2', { class: 'section-title' }, 'EL ', h('em', null, 'TALLER')),
+          h('div', { class: 'divider' }),
+          h('p', { class: 'section-sub' }, 'Cada moto que entra al paddock recibe atención de nivel competitivo.'),
+          h('div', { class: 'gallery-masonry' },
+            GALLERY.map((item, i) =>
+              h('div', { key: i, class: 'gal-item', onClick: () => setLb(item) },
+                h('img', { src: item.src, alt: item.label, loading: 'lazy' }),
+                h('div', { class: 'gal-overlay' },
+                  h('div', { style: { display: 'flex', alignItems: 'center', gap: '0.4rem' } },
+                    h(ZoomIcon),
+                    h('span', { class: 'gal-label' }, item.label)
+                  )
+                )
+              )
+            )
+          )
+        ),
+        lb && h('div', { class: 'lb-overlay', onClick: () => setLb(null) },
+          h('div', { class: 'lb-content', onClick: e => e.stopPropagation() },
+            h('button', { class: 'lb-close', onClick: () => setLb(null) }, '✕ CERRAR'),
+            h('img', { src: lb.src, alt: lb.label }),
+            h('div', { class: 'lb-caption' }, lb.label)
+          )
+        )
+      );
+    }
+
+    /* ─── TERMINAL CHAT ──────────────────────────────────────── */
+    const CHAT_STEPS = [
+      { key: 'name', prompt: 'CONEXIÓN INICIADA. Para comenzar, ¿cuál es tu nombre, piloto?', placeholder: 'Tu nombre...', options: null },
+      { key: 'service', prompt: 'Bienvenido al sistema MOTOAPP. Selecciona el servicio requerido:', placeholder: 'O escribe tu servicio...', options: ['MANTENIMIENTO', 'TUNING ECU', 'FRENOS', 'DIAGNÓSTICO'] },
+      { key: 'issue', prompt: 'Describe brevemente el problema o requerimiento:', placeholder: 'Detalla el síntoma o trabajo...', options: null },
+      { key: 'contact', prompt: 'Casi listo. ¿Cuál es tu número o email para confirmar la cita?', placeholder: 'Teléfono o email...', options: null },
+    ];
+
+    function TerminalChat() {
+      const [step, setStep] = useState(0);
+      const [messages, setMessages] = useState([
+        { type: 'sys', text: 'MOTOAPP TELEMETRÍA v2.4.1 — Sistema activo' },
+        { type: 'sys', text: CHAT_STEPS[0].prompt },
+      ]);
+      const [inputVal, setInputVal] = useState('');
+      const [done, setDone] = useState(false);
+      const [userData, setUserData] = useState({});
+      const msgRef = useRef(null);
+
+      useEffect(() => {
+        if (msgRef.current) msgRef.current.scrollTop = msgRef.current.scrollHeight;
+      }, [messages]);
+
+      const send = (val) => {
+        const value = val || inputVal.trim();
+        if (!value) return;
+        const cur = CHAT_STEPS[step];
+        const newData = { ...userData, [cur.key]: value };
+        setUserData(newData);
+        const msgs = [...messages, { type: 'usr', text: value }];
+        if (step < CHAT_STEPS.length - 1) {
+          const next = step + 1;
+          msgs.push({ type: 'dat', text: `${cur.key.toUpperCase()} registrado: "${value}"` });
+          msgs.push({ type: 'sys', text: CHAT_STEPS[next].prompt });
+          setStep(next);
+        } else {
+          msgs.push({ type: 'dat', text: 'TRANSMISIÓN COMPLETA — Datos recibidos' });
+          msgs.push({ type: 'sys', text: `Confirmación enviada. Te contactamos pronto, ${newData.name}. ¡Al paddock!` });
+          setDone(true);
+        }
+        setMessages(msgs);
+        setInputVal('');
+      };
+
+      const progress = ((step + (done ? 1 : 0)) / CHAT_STEPS.length) * 100;
+
+      return h('div', { class: 'term-wrap' },
+        h('div', { class: 'term-header' },
+          h('div', { class: 'term-dot', style: { background: '#ff5f57' } }),
+          h('div', { class: 'term-dot', style: { background: '#febc2e' } }),
+          h('div', { class: 'term-dot', style: { background: '#28c840' } }),
+          h('div', { class: 'term-title' }, 'MOTOAPP_TELEMETRÍA — CANAL SEGURO')
+        ),
+        h('div', { class: 'term-prog' },
+          h('div', { class: 'term-prog-fill', style: { width: `${progress}%` } })
+        ),
+        h('div', { class: 'term-msgs', ref: msgRef },
+          messages.map((m, i) => h('div', { key: i, class: `msg-${m.type}` }, m.text)),
+          !done && h('span', { class: 'cursor-blink' })
+        ),
+        !done && CHAT_STEPS[step].options && h('div', { class: 'term-opts' },
+          CHAT_STEPS[step].options.map(opt =>
+            h('button', { key: opt, class: 'term-opt', onClick: () => send(opt) }, opt)
+          )
+        ),
+        !done && h('div', { class: 'term-input-row' },
+          h('input', {
+            class: 'term-input',
+            value: inputVal,
+            onInput: e => setInputVal(e.target.value),
+            onKeyDown: e => e.key === 'Enter' && send(),
+            placeholder: CHAT_STEPS[step].placeholder,
+          }),
+          h('button', { class: 'term-send', onClick: () => send() }, 'ENVIAR')
+        )
+      );
+    }
+
+    function WorkshopInfo() {
+      return h('div', null,
+        h('div', { class: 'info-block' },
+          h('div', { class: 'info-row' },
+            h('div', { class: 'info-item' },
+              h('div', { class: 'info-label' }, '◉ Coordenadas'),
+              h('div', { class: 'info-val' }, 'Zona Industrial Sur', h('br'), h('span', null, 'Calle 6 Sur #10-46'), h('br'), 'Neiva, Huila')
+            ),
+            h('div', { class: 'info-item' },
+              h('div', { class: 'info-label' }, '◎ Horario Operativo'),
+              h('div', { class: 'info-val' },
+                h('span', null, 'LUN–VIE'), ' 08:00 – 18:00', h('br'),
+                h('span', null, 'SAB'), '     08:00 – 14:00', h('br'),
+                h('span', null, 'DOM'), '     Cerrado'
+              )
+            )
+          ),
+          h('div', { class: 'contact-btns' },
+            h('button', { class: 'cbtn cbtn-wa' }, 'WhatsApp Directo'),
+            h('button', { class: 'cbtn cbtn-em' }, 'Email Soporte')
+          ),
+          h('div', { class: 'map-ph' },
+            h('div', { style: { color: '#ff6200' } }, h(RadarIcon)),
+            h('div', { class: 'map-ph-label' }, 'Activar Radar de Ubicación'),
+            h('div', { style: { fontFamily: "'Roboto Mono', monospace", fontSize: '0.62rem', color: '#888' } }, '2.927° N, 75.282° W')
+          )
+        )
+      );
+    }
+
+    function Contact() {
+      return h('section', { class: 'section contact-bg', id: 'contacto' },
+        h('div', { class: 'section-inner' },
+          h('div', { class: 'section-label' }, '// Canal de comunicación directa'),
+          h('h2', { class: 'section-title' }, 'INICIA LA ', h('em', null, 'TELEMETRÍA')),
+          h('div', { class: 'divider' }),
+          h('p', { class: 'section-sub' }, 'Ponte en contacto con nuestro equipo de ingenieros para programar tu servicio o consultar sobre preparaciones de alto rendimiento.'),
+          h('div', { class: 'contact-grid' },
+            h(TerminalChat),
+            h(WorkshopInfo)
+          )
+        )
+      );
+    }
+
+    /* ─── BOOKING MODAL ──────────────────────────────────────── */
+    const BRANDS = ['DUCATI','BMW','KTM','YAMAHA','TRIUMPH','SUZUKI','HONDA','KAWASAKI','OTRO'];
+    const MOTIVOS = ['MANTENIMIENTO PREVENTIVO','TUNING ECU / MAPEO','FRENOS','DIAGNÓSTICO','PREPARACIÓN CIRCUITO','OTRO'];
+
+    function BookingModal({ onClose }) {
+      const [step, setStep] = useState(0);
+      const [data, setData] = useState({ brand: '', motivo: '', fecha: '', nombre: '', telefono: '', modelo: '' });
+      const [confirmed, setConfirmed] = useState(false);
+      const upd = (k, v) => setData(d => ({ ...d, [k]: v }));
+
+      const labels = ['PASO 01','PASO 02','PASO 03','PASO 04'];
+      const titles = ['SELECCIONA LA MARCA','MOTIVO DE INGRESO','FECHA Y MODELO','DATOS DEL PILOTO'];
+      const subs = ['Elige la marca de tu moto','Define el tipo de servicio','Agenda tu cita con nosotros','Información para confirmar'];
+
+      const canNext = () => {
+        if (step === 0) return !!data.brand;
+        if (step === 1) return !!data.motivo;
+        if (step === 2) return !!data.fecha && !!data.modelo;
+        if (step === 3) return !!data.nombre && !!data.telefono;
+        return false;
+      };
+
+      return h('div', { class: 'modal-overlay', onClick: onClose },
+        h('div', { class: 'modal-box', onClick: e => e.stopPropagation() },
+          h('button', { class: 'modal-close', onClick: onClose }, h(XIcon)),
+          confirmed
+            ? h('div', { style: { textAlign: 'center', padding: '2rem 0' } },
+                h('div', { style: { color: '#ff6200', fontSize: '3rem', marginBottom: '1rem' } }, '✓'),
+                h('div', { class: 'modal-title' }, 'CITA CONFIRMADA'),
+                h('p', { style: { color: '#888', fontSize: '0.85rem', marginTop: '0.75rem', fontFamily: "'Roboto Mono', monospace" } },
+                  `Recibirás confirmación en breve, ${data.nombre}. ¡Nos vemos en el paddock!`),
+                h('button', { class: 'btn-orange', style: { marginTop: '1.5rem' }, onClick: onClose }, 'CERRAR')
+              )
+            : h('div', null,
+                h('div', { class: 'modal-stepper' },
+                  labels.map((_, i) => h('div', { key: i, class: `step-dot${i <= step ? ' on' : ''}` }))
+                ),
+                h('div', { class: 'modal-step-label' }, `${labels[step]} / ${labels.length}`),
+                h('div', { class: 'modal-title' }, titles[step]),
+                h('p', { class: 'modal-sub' }, subs[step]),
+                step === 0 && h('div', { class: 'brand-grid' },
+                  BRANDS.map(b => h('button', { key: b, class: `brand-btn${data.brand === b ? ' sel' : ''}`, onClick: () => upd('brand', b) }, b))
+                ),
+                step === 1 && h('div', null,
+                  MOTIVOS.map(m => h('button', { key: m, class: `motivo-btn${data.motivo === m ? ' sel' : ''}`, onClick: () => upd('motivo', m) }, m))
+                ),
+                step === 2 && h('div', null,
+                  h('input', { class: 'm-input', placeholder: 'Modelo y cilindraje (ej: BMW S1000RR 2022)', value: data.modelo, onInput: e => upd('modelo', e.target.value) }),
+                  h('input', { class: 'm-input', type: 'date', value: data.fecha, onInput: e => upd('fecha', e.target.value), style: { colorScheme: 'dark' } })
+                ),
+                step === 3 && h('div', null,
+                  h('input', { class: 'm-input', placeholder: 'Nombre completo', value: data.nombre, onInput: e => upd('nombre', e.target.value) }),
+                  h('input', { class: 'm-input', placeholder: 'Teléfono o WhatsApp', value: data.telefono, onInput: e => upd('telefono', e.target.value) })
+                ),
+                h('div', { class: 'modal-actions' },
+                  step > 0
+                    ? h('button', { class: 'btn-back', onClick: () => setStep(s => s - 1) }, '← ATRÁS')
+                    : h('div'),
+                  step < 3
+                    ? h('button', { class: 'btn-orange', disabled: !canNext(), onClick: () => canNext() && setStep(s => s + 1) }, 'SIGUIENTE →')
+                    : h('button', { class: 'btn-orange', disabled: !canNext(), onClick: () => canNext() && setConfirmed(true) }, 'CONFIRMAR CITA')
+                )
+              )
+        )
+      );
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────────── */
+    function Footer() {
+      const [email, setEmail] = useState('');
+      return h('footer', { class: 'footer' },
+        h('div', { class: 'section-inner' },
+          h('div', { class: 'footer-grid' },
+            h('div', null,
+              h('div', { class: 'footer-col-title' }, 'MOTOAPP LAB'),
+              h('ul', { class: 'footer-links' },
+                h('li', null, h('a', { href: '#' }, 'Servicios')),
+                h('li', null, h('a', { href: '#taller' }, 'El Taller')),
+                h('li', null, h('a', { href: '#contacto' }, 'Contacto')),
+                h('li', null, h('a', { href: '#' }, 'Blog Técnico'))
+              )
+            ),
+            h('div', null,
+              h('div', { class: 'footer-col-title' }, 'LEGAL'),
+              h('ul', { class: 'footer-links' },
+                h('li', null, h('a', { href: '#' }, 'Términos y Condiciones')),
+                h('li', null, h('a', { href: '#' }, 'Política de Privacidad')),
+                h('li', null, h('a', { href: '#' }, 'Garantía de Servicio'))
+              )
+            ),
+            h('div', null,
+              h('div', { class: 'footer-col-title' }, 'REDES'),
+              h('div', { class: 'social-row' },
+                ['IG','FB','YT','TK'].map(s => h('div', { key: s, class: 'social-btn' }, s))
+              )
+            ),
+            h('div', null,
+              h('div', { class: 'footer-col-title' }, 'ÚNETE AL PADDOCK'),
+              h('p', { style: { fontSize: '0.78rem', color: '#888', marginBottom: '0.75rem', lineHeight: 1.6 } }, 'Noticias técnicas, promociones y novedades del taller directo a tu inbox.'),
+              h('div', { class: 'nl-row' },
+                h('input', { class: 'nl-input', placeholder: 'tu@email.com', value: email, onInput: e => setEmail(e.target.value) }),
+                h('button', { class: 'nl-btn' }, '→')
+              )
+            )
+          ),
+          h('div', { class: 'footer-bottom' },
+            h('div', { class: 'footer-copy' }, '© 2025 MOTOAPP. Neiva, Huila — Colombia. Todos los derechos reservados.'),
+            h('div', { class: 'footer-mark' }, 'MOTOAPP')
+          )
+        )
+      );
+    }
+
+    /* ─── APP ROOT ───────────────────────────────────────────── */
+    function App() {
+      const [modal, setModal] = useState(false);
+      return h('div', null,
+        h(Navbar, { onBooking: () => setModal(true) }),
+        h(Hero, { onBooking: () => setModal(true) }),
+        h(Servicios),
+        h(Testimonials),
+        h(Gallery),
+        h(Contact),
+        h(Footer),
+        modal && h(BookingModal, { onClose: () => setModal(false) })
+      );
+    }
+
+    render(h(App), document.getElementById('root'));
+  </script>
+</body>
+</html>

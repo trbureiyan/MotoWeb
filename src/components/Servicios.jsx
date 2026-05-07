@@ -73,11 +73,11 @@ export function Servicios() {
   return (
     <section className="section services-section" id="servicios">
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <div className="section-label">// Capacidades del taller</div>
-        <h2 className="section-title">NUESTROS <em>SERVICIOS</em></h2>
-        <div className="divider-line" />
-        <p className="section-sub">Precisión mecánica y telemetría avanzada. Explorando los límites del rendimiento en el corazón de Neiva.</p>
-        <div className="flip-grid">
+        <div className="section-label reveal">// Capacidades del taller</div>
+        <h2 className="section-title reveal">NUESTROS <em>SERVICIOS</em></h2>
+        <div className="divider-line reveal" />
+        <p className="section-sub reveal">Precisión mecánica y telemetría avanzada. Explorando los límites del rendimiento en el corazón de Neiva.</p>
+        <div className="flip-grid reveal-stagger">
           {SERVICES.map(s => <FlipCard key={s.title} service={s} />)}
         </div>
       </div>

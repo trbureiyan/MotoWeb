@@ -26,9 +26,11 @@ export const Styles = () => (
       position: sticky;
       top: 0;
       z-index: 999;
-      background: rgba(14,14,14,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid ${T.border};
+      background: rgba(14,14,14,0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       padding: 0 2rem;
       height: 64px;
       display: flex;
@@ -98,14 +100,25 @@ export const Styles = () => (
       overflow: hidden;
       padding: 6rem 2rem 4rem;
     }
+    .hero-video-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
     .hero-grid-bg {
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255,98,0,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,98,0,0.04) 1px, transparent 1px);
+        linear-gradient(rgba(255,98,0,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,98,0,0.08) 1px, transparent 1px);
       background-size: 60px 60px;
       pointer-events: none;
+      z-index: 1;
     }
     .hero-glow {
       position: absolute;
@@ -137,7 +150,7 @@ export const Styles = () => (
     }
     .hero-h1 {
       font-family: ${T.head};
-      font-size: clamp(3rem, 8vw, 7rem);
+      font-size: clamp(3.5rem, 10vw, 8.5rem);
       font-weight: 900;
       line-height: 0.9;
       text-transform: uppercase;
@@ -146,7 +159,7 @@ export const Styles = () => (
     }
     .hero-h1 span { color: ${T.orange}; }
     .hero-sub {
-      font-size: 1rem;
+      font-size: 1.15rem;
       color: ${T.muted};
       max-width: 520px;
       line-height: 1.7;
@@ -187,7 +200,7 @@ export const Styles = () => (
       margin-bottom: 0.75rem;
     }
     .section-title {
-      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: -0.01em;
@@ -301,19 +314,70 @@ export const Styles = () => (
       margin-top: 1rem;
     }
 
-    /* TESTIMONIALS BENTO */
-    .bento-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      grid-template-rows: auto auto;
-      gap: 1rem;
+    /* GLOBAL ANIMATIONS (Alternative to GSAP) */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-stagger > * {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-stagger.active > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-stagger.active > *:nth-child(1) { transition-delay: 0.1s; }
+    .reveal-stagger.active > *:nth-child(2) { transition-delay: 0.2s; }
+    .reveal-stagger.active > *:nth-child(3) { transition-delay: 0.3s; }
+    .reveal-stagger.active > *:nth-child(4) { transition-delay: 0.4s; }
+    .reveal-stagger.active > *:nth-child(5) { transition-delay: 0.5s; }
+
+    /* TESTIMONIALS CAROUSEL */
+    .carousel-container {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none; /* Firefox */
+      display: flex;
+      gap: 1.5rem;
+      padding-bottom: 2rem;
+      cursor: grab;
+    }
+    .carousel-container::-webkit-scrollbar { display: none; }
+    .carousel-container:active { cursor: grabbing; }
+    
+    .carousel-item {
+      min-width: 320px;
+      max-width: 400px;
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+    }
+    
     .bento-card {
-      background: ${T.bg2};
-      border: 1px solid ${T.border};
-      padding: 1.75rem;
+      background: rgba(26,26,26, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 2rem;
       position: relative;
       overflow: hidden;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .bento-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .bento-card::before {
       content: '"';
@@ -322,13 +386,9 @@ export const Styles = () => (
       left: 1.25rem;
       font-size: 6rem;
       color: ${T.orange};
-      opacity: 0.08;
+      opacity: 0.1;
       font-family: Georgia, serif;
       line-height: 1;
-    }
-    .bento-card.featured {
-      grid-row: span 2;
-      border-left: 2px solid ${T.orange};
     }
     .bento-quote {
       font-size: 0.9rem;
@@ -787,9 +847,12 @@ export const Styles = () => (
 
     /* FOOTER */
     .footer {
-      background: ${T.bg1};
-      border-top: 1px solid ${T.border};
+      background: linear-gradient(180deg, rgba(18,18,18,0.7) 0%, rgba(14,14,14,0.95) 100%);
+      backdrop-filter: blur(10px);
+      position: relative;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
       padding: 4rem 2rem 2rem;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
     }
     .footer-grid {
       display: grid;

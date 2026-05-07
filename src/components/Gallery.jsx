@@ -6,8 +6,9 @@ const GALLERY_ITEMS = [
   { src: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=600&q=80', label: 'Yamaha R1 — Suspensión' },
   { src: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&q=80', label: 'Kawasaki ZX-10R — Frenos Brembo' },
   { src: 'https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=600&q=80', label: 'Ducati V4 — Mapeo Dyno' },
-  { src: 'https://images.unsplash.com/photo-1616788494707-ec28f08d05a1?w=600&q=80', label: 'Honda CBR — Mantenimiento' },
+  { src: 'https://www.motofichas.com/images/cache/10-honda-cb1000-hornet-sp-2025-estudio-negro-01-739-a.jpg', label: 'Honda CBR — Mantenimiento' },
   { src: 'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=600&q=80', label: 'Suzuki GSX-R — Full Service' },
+  { src: 'https://www.moto.ch/wp-content/uploads/2024/12/Honda-CB1000-Hornet_01-1300x867.jpg', label: 'Honda CB1000 Hornet SP' },
 ];
 
 export function Gallery() {
@@ -16,11 +17,11 @@ export function Gallery() {
   return (
     <section className="section gallery-section" id="taller">
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <div className="section-label">// Proyectos recientes</div>
-        <h2 className="section-title">EL <em>TALLER</em></h2>
-        <div className="divider-line" />
-        <p className="section-sub">Cada moto que entra al paddock recibe atención de nivel competitivo.</p>
-        <div className="gallery-masonry">
+        <div className="section-label reveal">// Proyectos recientes</div>
+        <h2 className="section-title reveal">EL <em>TALLER</em></h2>
+        <div className="divider-line reveal" />
+        <p className="section-sub reveal">Cada moto que entra al paddock recibe atención de nivel competitivo.</p>
+        <div className="gallery-masonry reveal-stagger">
           {GALLERY_ITEMS.map((item, i) => (
             <div key={i} className="gallery-item" onClick={() => setLightbox(item)}>
               <img src={item.src} alt={item.label} loading="lazy" />

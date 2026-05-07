@@ -1,14 +1,20 @@
 export function Hero({ onBooking }) {
   return (
     <section className="hero">
+      <video 
+        className="hero-video-bg" 
+        src="src/assets/vid/VideoBanner.mp4" 
+        autoPlay 
+        loop 
+        muted 
+        playsInline 
+      />
       <div className="hero-grid-bg" />
       <div className="hero-glow" />
-      <div className="hero-inner animate-up">
-        <div className="hero-label">Neiva, Huila — Colombia</div>
+      <div className="hero-inner animate-up reveal">
+        <div className="hero-label">Neiva, Huila - Colombia</div>
         <h1 className="hero-h1">
-          PRECISIÓN.<br/>
-          <span>VELOCIDAD.</span><br/>
-          DOMINIO.
+          Moto.<span>Taller</span>
         </h1>
         <p className="hero-sub">
           Ingeniería de alto cilindraje para verdaderos entusiastas. Telemetría avanzada y tuning de élite en el corazón del sur de Colombia.

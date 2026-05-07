@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { T } from '../styles/tokens';
+import { FaInstagram, FaFacebookF, FaYoutube, FaTiktok } from 'react-icons/fa';
 
 export function Footer() {
   const [email, setEmail] = useState('');
@@ -8,7 +9,7 @@ export function Footer() {
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div className="footer-grid">
           <div>
-            <div className="footer-col-title">MOTOAPP LAB</div>
+            <div className="footer-col-title">MOTO.TALLER LAB</div>
             <ul className="footer-links">
               <li><a href="#">Servicios</a></li>
               <li><a href="#taller">El Taller</a></li>
@@ -27,10 +28,10 @@ export function Footer() {
           <div>
             <div className="footer-col-title">REDES</div>
             <div className="footer-social">
-              <div className="social-btn">IG</div>
-              <div className="social-btn">FB</div>
-              <div className="social-btn">YT</div>
-              <div className="social-btn">TK</div>
+              <a href="#" className="social-btn" aria-label="Instagram"><FaInstagram size={18} /></a>
+              <a href="#" className="social-btn" aria-label="Facebook"><FaFacebookF size={18} /></a>
+              <a href="#" className="social-btn" aria-label="YouTube"><FaYoutube size={18} /></a>
+              <a href="#" className="social-btn" aria-label="TikTok"><FaTiktok size={18} /></a>
             </div>
           </div>
           <div>
@@ -50,8 +51,8 @@ export function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <div className="footer-copy">© 2025 MOTOAPP. Neiva, Huila — Colombia. Todos los derechos reservados.</div>
-          <div className="footer-logo-mark">MOTOAPP</div>
+          <div className="footer-copy">© 2026 MOTOTaller. Neiva, Huila - Colombia. Todos los derechos reservados.</div>
+          <div className="footer-logo-mark">MOTO.TALLER</div>
         </div>
       </div>
     </footer>

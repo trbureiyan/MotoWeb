@@ -1,7 +1,7 @@
 export function Navbar({ onBooking }) {
   return (
     <nav className="nav-root">
-      <a className="nav-logo" href="#">MOTOAPP</a>
+      <a className="nav-logo" href="#">MOTO.Taller</a>
       <ul className="nav-links">
         <li><a href="#servicios">Servicios</a></li>
         <li><a href="#taller">El Taller</a></li>

@@ -1,2 +1,9 @@
-# MotoAPP
-Proyecto pequeño de web de taller de motos con branding empleando el framework de UiKit para exposicion del curso de Lenguajes para la web.
+# MotoWeb
+
+Aplicacion React para una web de taller de motos.
+
+## Scripts
+
+- `npm install`: instala dependencias.
+- `npm run dev`: levanta el servidor local de desarrollo.
+- `npm run build`: genera la version de produccion.

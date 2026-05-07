@@ -11,7 +11,7 @@ const CHAT_STEPS = [
   },
   {
     key: 'service',
-    prompt: 'Bienvenido al sistema MOTOAPP. Selecciona el servicio requerido:',
+    prompt: 'Bienvenido al sistema MOTO.TALLER. Selecciona el servicio requerido:',
     placeholder: 'O escribe tu servicio...',
     options: ['MANTENIMIENTO', 'TUNING ECU', 'SISTEMA DE FRENOS', 'DIAGNÓSTICO'],
   },
@@ -32,7 +32,7 @@ const CHAT_STEPS = [
 function TerminalChat() {
   const [step, setStep] = useState(0);
   const [messages, setMessages] = useState([
-    { type: 'system', text: 'MOTOAPP TELEMETRÍA v2.4.1 — Sistema activo' },
+    { type: 'system', text: 'MOTO.TALLER TELE-METRÍA v1.0.1 - Sistema activo' },
     { type: 'system', text: CHAT_STEPS[0].prompt },
   ]);
   const [inputVal, setInputVal] = useState('');
@@ -61,14 +61,42 @@ function TerminalChat() {
       newMessages.push({ type: 'data', text: `${currentStep.key.toUpperCase()} registrado: "${value}"` });
       newMessages.push({ type: 'system', text: CHAT_STEPS[nextStep].prompt });
       setStep(nextStep);
+      setMessages(newMessages);
+      setInputVal('');
     } else {
-      newMessages.push({ type: 'data', text: `TRANSMISIÓN COMPLETA — Datos recibidos` });
-      newMessages.push({ type: 'system', text: `Confirmación enviada. Te contactamos pronto, ${newUserData.name}. ¡Al paddock!` });
-      setCompleted(true);
-    }
+      newMessages.push({ type: 'system', text: `Enviando...` });
+      setMessages(newMessages);
+      setInputVal('');
 
-    setMessages(newMessages);
-    setInputVal('');
+      fetch('https://jsonplaceholder.typicode.com/posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          marca: newUserData.name,
+          motivo: newUserData.service,
+          contacto: newUserData.contact,
+          issue: newUserData.issue
+        }),
+        headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      })
+      .then(res => {
+        if (res.status === 201) {
+          if (window.UIkit) {
+            window.UIkit.notification({message: 'Transmisión exitosa. Ticket #1024', status: 'success'});
+          }
+          setMessages([
+            { type: 'system', text: 'MOTO.TALLER TELE-METRÍA v1.0.1 - Sistema activo' },
+            { type: 'system', text: CHAT_STEPS[0].prompt }
+          ]);
+          setStep(0);
+          setUserData({});
+        } else {
+          setMessages(prev => [...prev, { type: 'data', text: 'Error en transmisión.' }]);
+        }
+      })
+      .catch(() => {
+        setMessages(prev => [...prev, { type: 'data', text: 'Fallo de conexión.' }]);
+      });
+    }
   };
 
   const progress = ((step + (completed ? 1 : 0)) / CHAT_STEPS.length) * 100;
@@ -79,7 +107,7 @@ function TerminalChat() {
         <div className="terminal-dot" style={{ background: '#ff5f57' }} />
         <div className="terminal-dot" style={{ background: '#febc2e' }} />
         <div className="terminal-dot" style={{ background: '#28c840' }} />
-        <div className="terminal-title">MOTOAPP_TELEMETRÍA — CANAL SEGURO</div>
+        <div className="terminal-title">MOTO.TALLER.TELEMETRÍA - CANAL SEGURO</div>
       </div>
       <div className="terminal-progress-bar">
         <div className="terminal-progress-fill" style={{ width: `${progress}%` }} />
@@ -141,11 +169,11 @@ function WorkshopInfo() {
             </div>
           </div>
         </div>
-        <div className="contact-btns">
+        <div className="contact-btns reveal-stagger">
           <button className="contact-btn whatsapp">WhatsApp Directo</button>
           <button className="contact-btn email">Email Soporte</button>
         </div>
-        <div className="map-placeholder">
+        <div className="map-placeholder reveal">
           <div style={{ color: T.orange }}><IconRadar /></div>
           <div className="map-placeholder-label">Activar Radar de Ubicación</div>
           <div style={{ fontFamily: T.mono, fontSize: '0.62rem', color: T.muted }}>2.927° N, 75.282° W</div>
@@ -159,13 +187,17 @@ export function Contact() {
   return (
     <section className="section contact-section" id="contacto">
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <div className="section-label">// Canal de comunicación directa</div>
-        <h2 className="section-title">INICIA LA <em>TELEMETRÍA</em></h2>
-        <div className="divider-line" />
-        <p className="section-sub">Ponte en contacto con nuestro equipo de ingenieros para programar tu servicio o consultar sobre preparaciones específicas de alto rendimiento.</p>
+        <div className="section-label reveal">// Canal de comunicación directa</div>
+        <h2 className="section-title reveal">INICIA EL <em>SEGUIMIENTO</em></h2>
+        <div className="divider-line reveal" />
+        <p className="section-sub reveal">Ponte en contacto con nuestro equipo de ingenieros para programar tu servicio o consultar sobre preparaciones específicas de alto rendimiento.</p>
         <div className="contact-grid">
-          <TerminalChat />
-          <WorkshopInfo />
+          <div className="reveal">
+            <TerminalChat />
+          </div>
+          <div className="reveal">
+            <WorkshopInfo />
+          </div>
         </div>
       </div>
     </section>

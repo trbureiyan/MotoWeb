@@ -1,13 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { IconX } from './Icons';
 import { T } from '../styles/tokens';
 
-const BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI', 'OTRO'];
+const FALLBACK_BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI', 'OTRO'];
 const MOTIVOS = ['MANTENIMIENTO PREVENTIVO', 'TUNING ECU / MAPEO', 'FRENOS', 'DIAGNÓSTICO', 'PREPARACIÓN CIRCUITO', 'OTRO'];
 
 export function BookingModal({ onClose }) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState({ brand: '', motivo: '', fecha: '', nombre: '', telefono: '', modelo: '' });
+  const [brands, setBrands] = useState([]);
+  const [loadingBrands, setLoadingBrands] = useState(false);
+
+  useEffect(() => {
+    setLoadingBrands(true);
+    fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/motorcycle?format=json')
+      .then(r => r.json())
+      .then(d => {
+        const results = d.Results;
+        if (results && results.length > 0) {
+          // Tomar unas 12 marcas de la API para no saturar la UI
+          setBrands(results.map(r => r.MakeName).slice(0, 12));
+        } else {
+          setBrands(FALLBACK_BRANDS);
+        }
+      })
+      .catch(() => setBrands(FALLBACK_BRANDS))
+      .finally(() => setLoadingBrands(false));
+  }, []);
 
   const update = (key, val) => setData(d => ({ ...d, [key]: val }));
 
@@ -55,13 +74,17 @@ export function BookingModal({ onClose }) {
 
             {step === 0 && (
               <div className="brand-grid">
-                {BRANDS.map(b => (
-                  <button
-                    key={b}
-                    className={`brand-btn${data.brand === b ? ' selected' : ''}`}
-                    onClick={() => update('brand', b)}
-                  >{b}</button>
-                ))}
+                {loadingBrands ? (
+                  <div style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '2rem 0' }} uk-spinner="ratio: 1.5"></div>
+                ) : (
+                  brands.map(b => (
+                    <button
+                      key={b}
+                      className={`brand-btn${data.brand === b ? ' selected' : ''}`}
+                      onClick={() => update('brand', b)}
+                    >{b}</button>
+                  ))
+                )}
               </div>
             )}
 

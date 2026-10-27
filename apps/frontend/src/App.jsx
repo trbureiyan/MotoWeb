@@ -14,12 +14,14 @@ import { Testimonials } from './components/Testimonials';
 import { Preloader } from './components/Preloader';
 import { SoftCursor } from './components/SoftCursor';
 import { Styles } from './styles/Styles';
+import { Login } from './components/Login';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function App() {
   const [showModal, setShowModal] = useState(false);
   const [activeView, setActiveView] = useState('home');
+  const [loggedInUser, setLoggedInUser] = useState(null);
   const appRef = useRef();
 
   useGSAP(() => {
@@ -71,15 +73,30 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const showLogin = () => {
+    setActiveView('login');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogin = (user) => {
+    setLoggedInUser(user);
+    showHome();
+  };
+
   return (
     <div ref={appRef}>
       <Preloader />
       <SoftCursor />
       <Styles />
+      {activeView === 'login' ? (
+        <Login onBack={showHome} onLogin={handleLogin} />
+      ) : <>
       <Navbar 
         onBooking={() => setShowModal(true)} 
         isGallery={activeView === 'gallery'} 
         onBack={showHome} 
+        onLogin={showLogin}
+        loggedInUser={loggedInUser}
       />
       {activeView === 'gallery' ? (
         <GalleryPage onBack={showHome} />
@@ -94,6 +111,7 @@ export function App() {
         </>
       )}
       {showModal && <BookingModal onClose={() => setShowModal(false)} />}
+      </>}
     </div>
   );
 }

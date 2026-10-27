@@ -1,4 +1,6 @@
 export const navStyles = (T) => `
+    .nav-login { background: transparent; border: 0; color: ${T.muted}; padding: .6rem .25rem; font-family: ${T.mono}; font-size: .62rem; letter-spacing: .08em; cursor: pointer; white-space: nowrap; transition: color .2s; }
+    .nav-login:hover { color: ${T.orange}; }
     /* NAVBAR */
     .nav-root {
       position: sticky;

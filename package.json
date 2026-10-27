@@ -7,5 +7,12 @@
     "dev:frontend": "pnpm --filter moto.taller dev",
     "dev:backend": "pnpm --filter backend dev",
     "dev": "pnpm -r --parallel dev"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.24.3",
+    "zod": "^4.6.5"
   }
 }

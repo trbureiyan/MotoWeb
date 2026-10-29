@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -15,6 +15,7 @@ import { Preloader } from './components/Preloader';
 import { SoftCursor } from './components/SoftCursor';
 import { Styles } from './styles/Styles';
 import { Login } from './components/Login';
+import { AdminPanel } from './components/AdminPanel';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -22,7 +23,19 @@ export function App() {
   const [showModal, setShowModal] = useState(false);
   const [activeView, setActiveView] = useState('home');
   const [loggedInUser, setLoggedInUser] = useState(null);
+  const [pendingBooking, setPendingBooking] = useState(null);
   const appRef = useRef();
+
+  useEffect(() => {
+    fetch('/api/auth/profile', { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(user => {
+        if (user && (user.id || user._id || user.name)) {
+          setLoggedInUser(user);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useGSAP(() => {
     // Reveal simple
@@ -78,9 +91,21 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const showAdminPanel = () => {
+    setActiveView('admin');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleLogin = (user) => {
     setLoggedInUser(user);
-    showHome();
+    if (user.role === 'admin') {
+      showAdminPanel();
+    } else {
+      showHome();
+    }
+    if (pendingBooking) {
+      setShowModal(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -108,6 +133,8 @@ export function App() {
       <Styles />
       {activeView === 'login' ? (
         <Login onBack={showHome} onLogin={handleLogin} />
+      ) : activeView === 'admin' ? (
+        <AdminPanel onBack={showHome} loggedInUser={loggedInUser} />
       ) : <>
       <Navbar 
         onBooking={() => setShowModal(true)} 
@@ -115,6 +142,7 @@ export function App() {
         onBack={showHome} 
         onLogin={showLogin}
         onLogout={handleLogout}
+        onAdmin={showAdminPanel}
         loggedInUser={loggedInUser}
       />
       {activeView === 'gallery' ? (
@@ -129,7 +157,21 @@ export function App() {
           <Footer />
         </>
       )}
-      {showModal && <BookingModal onClose={() => setShowModal(false)} />}
+      {showModal && (
+        <BookingModal 
+          onClose={() => {
+            setShowModal(false);
+            setPendingBooking(null);
+          }}
+          loggedInUser={loggedInUser}
+          initialData={pendingBooking}
+          onRequireLogin={(bookingState) => {
+            setPendingBooking(bookingState);
+            setShowModal(false);
+            showLogin();
+          }}
+        />
+      )}
       </>}
     </div>
   );

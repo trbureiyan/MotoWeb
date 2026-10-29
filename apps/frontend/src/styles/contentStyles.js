@@ -663,6 +663,71 @@ export const contentStyles = (T) => `
       transition: border-color 0.2s;
       margin-top: 1.5rem;
     }
+
+    /* BOOKING SUMMARY */
+    .booking-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-card {
+      background: ${T.bg2};
+      border: 1px solid ${T.border};
+      padding: 0.9rem 1.1rem;
+    }
+    .summary-card-title {
+      font-family: ${T.mono};
+      font-size: 0.65rem;
+      color: ${T.orange};
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+      border-bottom: 1px solid ${T.border};
+      padding-bottom: 0.4rem;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+    }
+    .summary-label {
+      font-family: ${T.mono};
+      color: ${T.muted};
+      font-size: 0.72rem;
+    }
+    .summary-value {
+      font-family: ${T.head};
+      color: ${T.text};
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      text-align: right;
+    }
+    .summary-alert {
+      background: rgba(255, 98, 0, 0.08);
+      border: 1px solid ${T.orangeDim};
+      padding: 0.85rem 1rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .summary-alert-title {
+      font-family: ${T.head};
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: ${T.orange};
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+    .summary-alert-text {
+      font-size: 0.75rem;
+      color: ${T.muted};
+      margin: 0;
+      line-height: 1.4;
+    }
     .map-placeholder:hover { border-color: ${T.orange}; }
     .map-placeholder-label {
       font-family: ${T.mono};

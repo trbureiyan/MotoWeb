@@ -27,6 +27,16 @@ export function Login({ onBack, onLogin }) {
     }
   };
 
+  const handleDemoAdmin = () => {
+    onLogin({
+      id: 'usr-admin-demo',
+      name: 'Emanuel Ortiz',
+      email: 'admin@mototaller.com',
+      phone: '3109876543',
+      role: 'admin'
+    });
+  };
+
   return (
     <main className="login-page">
       <div className="login-image" aria-hidden="true">
@@ -55,6 +65,22 @@ export function Login({ onBack, onLogin }) {
               {loading ? 'INGRESANDO…' : 'INICIAR SESIÓN'} <span aria-hidden="true">→</span>
             </button>
           </form>
+
+          {/* ACCESO RÁPIDO PARA DESARROLLO */}
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ display: 'block', fontFamily: "'Roboto Mono', monospace", fontSize: '0.65rem', color: '#888', letterSpacing: '0.12em', marginBottom: '0.6rem', textTransform: 'uppercase' }}>
+              Entorno de Pruebas
+            </span>
+            <button
+              type="button"
+              className="btn-outline"
+              style={{ width: '100%', fontSize: '0.72rem', borderColor: '#ff6200', color: '#ff6200', padding: '0.65rem' }}
+              onClick={handleDemoAdmin}
+            >
+              ACCESO RÁPIDO ADMINISTRADOR →
+            </button>
+          </div>
+
           <p className="login-footnote">¿Necesitas ayuda? <a href="mailto:contacto@mototaller.com">Contáctanos</a></p>
         </div>
         <span className="login-panel-mark">MOTO.TALLER <span>© 2026</span></span>

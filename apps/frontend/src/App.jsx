@@ -83,6 +83,24 @@ export function App() {
     showHome();
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('No fue posible cerrar la sesión.');
+      }
+
+      setLoggedInUser(null);
+      showHome();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div ref={appRef}>
       <Preloader />
@@ -96,6 +114,7 @@ export function App() {
         isGallery={activeView === 'gallery'} 
         onBack={showHome} 
         onLogin={showLogin}
+        onLogout={handleLogout}
         loggedInUser={loggedInUser}
       />
       {activeView === 'gallery' ? (

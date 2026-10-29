@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function Navbar({ onBooking, isGallery, onBack, onLogin, loggedInUser }) {
+export function Navbar({ onBooking, isGallery, onBack, onLogin, onLogout, loggedInUser }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -46,9 +46,20 @@ export function Navbar({ onBooking, isGallery, onBack, onLogin, loggedInUser }) 
 
       {/* LADO DERECHO: Botón Reserva y Menú Móvil */}
       <div className="nav-area-right" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
-        {!isGallery && <button className="nav-login" type="button" onClick={onLogin}>
-          {loggedInUser ? loggedInUser.name : 'INICIAR SESIÓN'}
-        </button>}
+        {!isGallery && (loggedInUser ? (
+          <>
+            <span className="nav-user" aria-label={`Usuario conectado: ${loggedInUser.name}`}>
+              {loggedInUser.name}
+            </span>
+            <button className="nav-logout" type="button" onClick={onLogout}>
+              CERRAR SESIÓN
+            </button>
+          </>
+        ) : (
+          <button className="nav-login" type="button" onClick={onLogin}>
+            INICIAR SESIÓN
+          </button>
+        ))}
         <button className="btn-orange" onClick={onBooking} style={{ whiteSpace: 'nowrap' }}>
           RESERVAR CITA
         </button>

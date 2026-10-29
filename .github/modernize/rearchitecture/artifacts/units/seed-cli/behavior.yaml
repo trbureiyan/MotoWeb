@@ -1,0 +1,26 @@
+unit: seed-cli
+side_effects:
+  - source_loc: apps/backend/scripts/seed.js:48
+    effect: Upserts catalog entries without duplicating existing records.
+    must_preserve: true
+  - source_loc: apps/backend/scripts/seed.js:53
+    effect: Creates an admin account only when the configured email does not exist.
+    must_preserve: true
+branches:
+  - source_loc: apps/backend/scripts/seed.js:54
+    condition: Admin email already exists
+    behavior: Leaves the existing account and password unchanged.
+    must_preserve: true
+error_paths:
+  - source_loc: apps/backend/scripts/seed.js:5
+    trigger: Missing database configuration or unavailable MongoDB
+    outcome: The seed exits with the connection error.
+    contract: Non-zero CLI exit
+    must_preserve: true
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: apps/backend/scripts/seed.js:48
+    scope: Catalog bulk writes, then admin lookup/create.
+    isolation: MongoDB default
+    must_preserve: true

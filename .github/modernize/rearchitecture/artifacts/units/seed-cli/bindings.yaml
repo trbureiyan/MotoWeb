@@ -1,0 +1,14 @@
+unit: seed-cli
+bindings:
+  - type: convention
+    name: npm run seed
+    source_loc: apps/backend/package.json:10
+    target: Node CLI entrypoint scripts/seed.js
+    must_appear_in_target: true
+runtime_config:
+  - key: MONGODB_URI
+    source_loc: apps/backend/scripts/seed.js:5
+    source: env
+    default_value: local MongoDB fallback from config
+    must_appear_in_target: true
+    notes: Database connection string.

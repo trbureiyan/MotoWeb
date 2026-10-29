@@ -12,6 +12,21 @@ import {
 } from './Icons';
 import { T } from '../styles/tokens';
 
+const apiRequest = async (path, options = {}) => {
+  const response = await fetch(path, {
+    credentials: 'include',
+    ...options,
+    headers: {
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {})
+    }
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) throw new Error(data?.message || 'La operación no pudo completarse.');
+  return data;
+};
+
 // Datos iniciales de demostración mientras el backend completa los controladores
 const INITIAL_APPOINTMENTS = [
   {
@@ -127,10 +142,11 @@ export function AdminPanel({ onBack, loggedInUser }) {
   const [activeTab, setActiveTab] = useState('citas');
   
   // Estados de datos
-  const [appointments, setAppointments] = useState(INITIAL_APPOINTMENTS);
-  const [services, setServices] = useState(INITIAL_SERVICES);
-  const [brands, setBrands] = useState(INITIAL_BRANDS);
-  const [users, setUsers] = useState(INITIAL_USERS);
+  const [appointments, setAppointments] = useState([]);
+  const [services, setServices] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [apiError, setApiError] = useState('');
 
   // Estados de filtros y búsqueda
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,71 +157,137 @@ export function AdminPanel({ onBack, loggedInUser }) {
   const [editingBrand, setEditingBrand] = useState(null);
   const [viewingNotesApt, setViewingNotesApt] = useState(null);
 
-  // Intentar cargar datos reales si el backend los expone
   useEffect(() => {
-    fetch('/api/appointments', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (Array.isArray(data) && data.length > 0) setAppointments(data); })
-      .catch(() => {});
-
-    fetch('/api/services')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (Array.isArray(data) && data.length > 0) setServices(data); })
-      .catch(() => {});
-
-    fetch('/api/brands')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (Array.isArray(data) && data.length > 0) setBrands(data); })
-      .catch(() => {});
+    Promise.all([
+      apiRequest('/api/appointments'),
+      apiRequest('/api/services?active=false'),
+      apiRequest('/api/brands?active=false'),
+      apiRequest('/api/users')
+    ])
+      .then(([appointmentData, serviceData, brandData, userData]) => {
+        setAppointments(appointmentData || []);
+        setServices(serviceData || []);
+        setBrands(brandData || []);
+        setUsers(userData || []);
+      })
+      .catch(error => setApiError(error.message));
   }, []);
 
   // Controladores de Citas
-  const updateAppointmentStatus = (id, newStatus) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+  const updateAppointmentStatus = async (id, newStatus) => {
+    try {
+      setApiError('');
+      const updated = await apiRequest(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+      setAppointments(prev => prev.map(a => a.id === id ? updated : a));
+    } catch (error) {
+      setApiError(error.message);
+    }
   };
 
-  const saveAppointmentNotes = (id, notes) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, adminNotes: notes } : a));
-    setViewingNotesApt(null);
+  const saveAppointmentNotes = async (id, notes) => {
+    try {
+      setApiError('');
+      const updated = await apiRequest(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ adminNotes: notes })
+      });
+      setAppointments(prev => prev.map(a => a.id === id ? updated : a));
+      setViewingNotesApt(null);
+    } catch (error) {
+      setApiError(error.message);
+    }
   };
 
   // Controladores de Servicios
-  const toggleServiceActive = (id) => {
-    setServices(prev => prev.map(s => s.id === id ? { ...s, isActive: !s.isActive } : s));
+  const toggleServiceActive = async (id) => {
+    const service = services.find(item => item.id === id);
+    if (!service) return;
+    try {
+      const updated = await apiRequest(`/api/services/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: !service.isActive })
+      });
+      setServices(prev => prev.map(item => item.id === id ? updated : item));
+    } catch (error) {
+      setApiError(error.message);
+    }
   };
 
-  const saveService = (serviceData) => {
-    if (serviceData.id) {
-      setServices(prev => prev.map(s => s.id === serviceData.id ? serviceData : s));
-    } else {
-      const newService = { ...serviceData, id: `srv-${Date.now()}`, isActive: true };
-      setServices(prev => [newService, ...prev]);
+  const saveService = async (serviceData) => {
+    try {
+      const saved = await apiRequest(serviceData.id ? `/api/services/${serviceData.id}` : '/api/services', {
+        method: serviceData.id ? 'PATCH' : 'POST',
+        body: JSON.stringify(serviceData)
+      });
+      setServices(prev => serviceData.id
+        ? prev.map(item => item.id === serviceData.id ? saved : item)
+        : [saved, ...prev]);
+      setEditingService(null);
+    } catch (error) {
+      setApiError(error.message);
     }
-    setEditingService(null);
   };
 
   // Controladores de Marcas
-  const toggleBrandActive = (id) => {
-    setBrands(prev => prev.map(b => b.id === id ? { ...b, isActive: !b.isActive } : b));
+  const toggleBrandActive = async (id) => {
+    const brand = brands.find(item => item.id === id);
+    if (!brand) return;
+    try {
+      const updated = await apiRequest(`/api/brands/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: !brand.isActive })
+      });
+      setBrands(prev => prev.map(item => item.id === id ? updated : item));
+    } catch (error) {
+      setApiError(error.message);
+    }
   };
 
-  const saveBrand = (brandData) => {
-    if (brandData.id) {
-      setBrands(prev => prev.map(b => b.id === brandData.id ? brandData : b));
-    } else {
-      const newBrand = { ...brandData, id: `br-${Date.now()}`, isActive: true };
-      setBrands(prev => [newBrand, ...prev]);
+  const saveBrand = async (brandData) => {
+    try {
+      const saved = await apiRequest(brandData.id ? `/api/brands/${brandData.id}` : '/api/brands', {
+        method: brandData.id ? 'PATCH' : 'POST',
+        body: JSON.stringify(brandData)
+      });
+      setBrands(prev => brandData.id
+        ? prev.map(item => item.id === brandData.id ? saved : item)
+        : [saved, ...prev]);
+      setEditingBrand(null);
+    } catch (error) {
+      setApiError(error.message);
     }
-    setEditingBrand(null);
   };
 
   // Controladores de Usuarios
-  const toggleUserRole = (id) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, role: u.role === 'admin' ? 'client' : 'admin' } : u));
+  const toggleUserRole = async (id) => {
+    const user = users.find(item => item.id === id);
+    if (!user) return;
+    try {
+      const updated = await apiRequest(`/api/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role: user.role === 'admin' ? 'client' : 'admin' })
+      });
+      setUsers(prev => prev.map(item => item.id === id ? updated : item));
+    } catch (error) {
+      setApiError(error.message);
+    }
   };
 
-  const toggleUserActive = (id) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, isActive: !u.isActive } : u));
+  const toggleUserActive = async (id) => {
+    const user = users.find(item => item.id === id);
+    if (!user) return;
+    try {
+      const updated = await apiRequest(`/api/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: !user.isActive })
+      });
+      setUsers(prev => prev.map(item => item.id === id ? updated : item));
+    } catch (error) {
+      setApiError(error.message);
+    }
   };
 
   // Filtros aplicados a citas
@@ -243,6 +325,12 @@ export function AdminPanel({ onBack, loggedInUser }) {
           </button>
         </div>
       </header>
+
+      {apiError && (
+        <div role="alert" style={{ margin: '1rem auto 0', maxWidth: 1200, padding: '0.75rem 1rem', color: '#ffb4a3', background: 'rgba(180, 45, 20, 0.18)', border: '1px solid rgba(255, 98, 0, 0.4)' }}>
+          {apiError}
+        </div>
+      )}
 
       {/* PESTAÑAS DE NAVEGACIÓN */}
       <nav className="admin-tabs-nav" aria-label="Navegación del panel de administración">

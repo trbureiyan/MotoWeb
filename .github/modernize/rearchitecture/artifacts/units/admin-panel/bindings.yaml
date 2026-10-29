@@ -1,0 +1,13 @@
+unit: admin-panel
+bindings:
+  - type: route-declaration
+    name: activeView equals admin
+    source_loc: apps/frontend/src/App.jsx:136
+    target: AdminPanel component
+    must_appear_in_target: true
+  - type: convention
+    name: Vite API proxy
+    source_loc: apps/frontend/vite.config.js:8
+    target: same-origin API fetches
+    must_appear_in_target: true
+runtime_config: []

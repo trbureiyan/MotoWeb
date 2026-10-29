@@ -1,0 +1,19 @@
+unit: auth-api
+bindings:
+  - type: route-declaration
+    name: auth router
+    source_loc: apps/backend/src/routes/index.js:10
+    target: auth routes
+    must_appear_in_target: true
+  - type: filter
+    name: authRequired
+    source_loc: apps/backend/src/routes/auth.routes.js:17
+    target: profile route
+    must_appear_in_target: true
+runtime_config:
+  - key: JWT_SECRET
+    source_loc: apps/backend/src/config.js:1
+    source: env
+    default_value: development fallback only
+    must_appear_in_target: true
+    notes: Used to sign and verify the token cookie.

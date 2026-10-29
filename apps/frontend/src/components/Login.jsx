@@ -27,16 +27,6 @@ export function Login({ onBack, onLogin }) {
     }
   };
 
-  const handleDemoAdmin = () => {
-    onLogin({
-      id: 'usr-admin-demo',
-      name: 'Emanuel Ortiz',
-      email: 'admin@mototaller.com',
-      phone: '3109876543',
-      role: 'admin'
-    });
-  };
-
   return (
     <main className="login-page">
       <div className="login-image" aria-hidden="true">
@@ -55,31 +45,31 @@ export function Login({ onBack, onLogin }) {
           <p className="login-description">Ingresa a tu cuenta para continuar.</p>
           <form className="login-form" onSubmit={handleSubmit}>
             <label htmlFor="login-email">CORREO ELECTRÓNICO</label>
-            <input id="login-email" type="email" autoComplete="email" required value={form.email}
-              onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="tu@correo.com" />
+            <input
+              id="login-email"
+              type="email"
+              autoComplete="email"
+              required
+              value={form.email}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+              placeholder="tu@correo.com"
+            />
             <label htmlFor="login-password">CONTRASEÑA</label>
-            <input id="login-password" type="password" autoComplete="current-password" required minLength={5}
-              value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="••••••••" />
+            <input
+              id="login-password"
+              type="password"
+              autoComplete="current-password"
+              required
+              minLength={5}
+              value={form.password}
+              onChange={(event) => setForm({ ...form, password: event.target.value })}
+              placeholder="••••••••"
+            />
             {error && <p className="login-error" role="alert">{error}</p>}
             <button className="btn-orange login-submit" type="submit" disabled={loading}>
               {loading ? 'INGRESANDO…' : 'INICIAR SESIÓN'} <span aria-hidden="true">→</span>
             </button>
           </form>
-
-          {/* ACCESO RÁPIDO PARA DESARROLLO */}
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <span style={{ display: 'block', fontFamily: "'Roboto Mono', monospace", fontSize: '0.65rem', color: '#888', letterSpacing: '0.12em', marginBottom: '0.6rem', textTransform: 'uppercase' }}>
-              Entorno de Pruebas
-            </span>
-            <button
-              type="button"
-              className="btn-outline"
-              style={{ width: '100%', fontSize: '0.72rem', borderColor: '#ff6200', color: '#ff6200', padding: '0.65rem' }}
-              onClick={handleDemoAdmin}
-            >
-              ACCESO RÁPIDO ADMINISTRADOR →
-            </button>
-          </div>
 
           <p className="login-footnote">¿Necesitas ayuda? <a href="mailto:contacto@mototaller.com">Contáctanos</a></p>
         </div>

@@ -21,6 +21,8 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
   const [brands, setBrands] = useState([]);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const modalRef = useRef();
 
   useGSAP(() => {
@@ -36,18 +38,11 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
 
   useEffect(() => {
     setLoadingBrands(true);
-    fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/motorcycle?format=json')
+    fetch('/api/brands')
       .then(r => r.json())
-      .then(d => {
-        const results = d.Results || [];
-        const verified = TARGET_BRANDS.filter(target =>
-          results.some(r => r.MakeName?.toUpperCase().trim() === target)
-        );
-        if (verified.length > 0) {
-          setBrands([...verified, 'OTRO']);
-        } else {
-          setBrands(FALLBACK_BRANDS);
-        }
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) throw new Error('No hay marcas disponibles');
+        setBrands(data.filter(brand => brand.isActive !== false).map(brand => brand.name));
       })
       .catch(() => setBrands(FALLBACK_BRANDS))
       .finally(() => setLoadingBrands(false));
@@ -89,6 +84,31 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
   const displayMotivo = data.motivo === 'OTRO'
     ? (data.otroMotivo ? `OTRO: ${data.otroMotivo.trim().toUpperCase()}` : 'OTRO')
     : data.motivo;
+
+  const confirmAppointment = async () => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brand: data.brand,
+          service: data.motivo === 'OTRO' ? 'OTRO' : data.motivo,
+          motorcycleModel: data.modelo,
+          requestedDate: data.fecha
+        })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'No fue posible registrar la cita.');
+      setDone(true);
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -241,6 +261,15 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
                   </div>
                 </div>
 
+                {submitError && (
+                  <div className="summary-alert" role="alert">
+                    <div>
+                      <div className="summary-alert-title">NO SE PUDO REGISTRAR LA CITA</div>
+                      <p className="summary-alert-text">{submitError}</p>
+                    </div>
+                  </div>
+                )}
+
                 {loggedInUser ? (
                   <div className="summary-card">
                     <div className="summary-card-title">DATOS DEL PILOTO (DE TU CUENTA)</div>
@@ -288,11 +317,11 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
               ) : loggedInUser ? (
                 <button
                   className="btn-orange"
-                  disabled={!canNext()}
-                  onClick={() => setDone(true)}
-                  style={{ opacity: canNext() ? 1 : 0.4 }}
+                  onClick={confirmAppointment}
+                  disabled={!canNext() || submitting}
+                  style={{ opacity: canNext() && !submitting ? 1 : 0.4 }}
                 >
-                  CONFIRMAR CITA
+                  {submitting ? 'REGISTRANDO...' : 'CONFIRMAR CITA'}
                 </button>
               ) : (
                 <button

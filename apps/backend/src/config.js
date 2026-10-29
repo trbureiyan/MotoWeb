@@ -4,4 +4,10 @@ if (!TOKEN_SECRET) {
     throw new Error('JWT_SECRET es obligatorio en producción.')
 }
 
-export const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://localhost:27017/motoweb"
+const configuredMongoUri = process.env.MONGODB_URI || process.env.MONGO_URI
+const normalizedMongoUri = configuredMongoUri
+    ?.replace(/\s+#.*$/, '')
+    .trim()
+    .replace(/%20(?=\?|$)/i, '')
+
+export const MONGO_URI = normalizedMongoUri || "mongodb://localhost:27017/motoweb"

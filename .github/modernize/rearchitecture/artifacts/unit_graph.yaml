@@ -1,0 +1,83 @@
+units:
+  - name: auth-api
+    trigger: api
+    trigger_detail: "POST /api/auth/login|register|logout; GET /api/auth/profile"
+    source_anchors:
+      - path: apps/backend/src/routes/auth.routes.js
+        line: 11
+      - path: apps/backend/src/controllers/auth.controller.js
+        line: 6
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []
+  - name: catalog-api
+    trigger: api
+    trigger_detail: "GET|POST|PATCH /api/brands and /api/services"
+    source_anchors:
+      - path: apps/backend/src/routes/brands.routes.js
+        line: 8
+      - path: apps/backend/src/routes/services.routes.js
+        line: 8
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []
+  - name: appointment-api
+    trigger: api
+    trigger_detail: "POST /api/appointments; admin GET|PATCH /api/appointments"
+    source_anchors:
+      - path: apps/backend/src/routes/appointments.routes.js
+        line: 8
+      - path: apps/backend/src/controllers/appointments.controller.js
+        line: 21
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on:
+      - unit: catalog-api
+        via: "findBrand/findService"
+    shared_refs: []
+  - name: admin-panel
+    trigger: page
+    trigger_detail: "authenticated admin view selected by App.activeView=admin"
+    source_anchors:
+      - path: apps/frontend/src/components/AdminPanel.jsx
+        line: 141
+      - path: apps/frontend/src/App.jsx
+        line: 136
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on:
+      - unit: appointment-api
+        via: "fetch /api/appointments"
+      - unit: catalog-api
+        via: "fetch /api/brands and /api/services"
+      - unit: user-admin-api
+        via: "fetch /api/users"
+    shared_refs: []
+  - name: user-admin-api
+    trigger: api
+    trigger_detail: "admin GET|PATCH /api/users"
+    source_anchors:
+      - path: apps/backend/src/routes/users.routes.js
+        line: 8
+      - path: apps/backend/src/controllers/users.controller.js
+        line: 4
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []
+  - name: seed-cli
+    trigger: cli
+    trigger_detail: "npm run seed in apps/backend"
+    source_anchors:
+      - path: apps/backend/scripts/seed.js
+        line: 1
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on:
+      - unit: catalog-api
+        via: "Brand and Service models"
+      - unit: auth-api
+        via: "User model"
+    shared_refs: []

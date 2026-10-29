@@ -1,0 +1,30 @@
+unit: admin-panel
+side_effects:
+  - source_loc: apps/frontend/src/components/AdminPanel.jsx:162
+    effect: Loads persisted appointments, services, brands and users on mount.
+    must_preserve: true
+  - source_loc: apps/frontend/src/components/AdminPanel.jsx:180
+    effect: Persists appointment status and note changes through PATCH requests.
+    must_preserve: true
+branches:
+  - source_loc: apps/frontend/src/App.jsx:136
+    condition: activeView is admin
+    behavior: Renders the administrative panel instead of public content.
+    must_preserve: true
+  - source_loc: apps/frontend/src/components/AdminPanel.jsx:15
+    condition: API request fails
+    behavior: Displays an alert with the backend error instead of silently using fake records.
+    must_preserve: true
+error_paths:
+  - source_loc: apps/frontend/src/components/AdminPanel.jsx:165
+    trigger: Protected API returns an error
+    outcome: Shows the API error in the panel.
+    contract: Visible role=alert message
+    must_preserve: true
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: apps/frontend/src/components/AdminPanel.jsx:162
+    scope: Parallel initial reads; each mutation waits for its API response before updating UI state.
+    isolation: Browser request concurrency
+    must_preserve: true

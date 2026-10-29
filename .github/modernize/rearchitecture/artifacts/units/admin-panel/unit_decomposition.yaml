@@ -1,0 +1,7 @@
+unit: admin-panel
+commit: false
+candidate_splits:
+  - id: apps/frontend/src/components/AdminPanel.jsx:141
+    drivers: [concern_split]
+    rationale: The panel combines appointments, catalog and user administration in one externally visible component; separate tabs are candidates for later design work.
+    source_slice: {file: apps/frontend/src/components/AdminPanel.jsx, lines: [141, 800]}

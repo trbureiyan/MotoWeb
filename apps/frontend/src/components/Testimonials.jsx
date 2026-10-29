@@ -112,17 +112,9 @@ export function Testimonials() {
 }
 
 function MetricsRow() {
-  const [f1Races, setF1Races] = useState(500);
-
-  useEffect(() => {
-    fetch('https://ergast.com/api/f1/current.json')
-      .then(res => res.json())
-      .then(data => {
-        const total = data.MRData.total || data.MRData.RaceTable.Races.length;
-        setF1Races(parseInt(total, 10));
-      })
-      .catch(e => console.error('F1 API Error:', e));
-  }, []);
+  // Ergast dejó de publicar este endpoint. El indicador es institucional y
+  // no debe depender de una API externa para renderizar la página.
+  const f1Races = 500;
 
   return (
     <div className="metrics-row">

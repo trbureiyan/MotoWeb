@@ -1,0 +1,23 @@
+unit: user-admin-api
+side_effects:
+  - source_loc: apps/backend/src/controllers/users.controller.js:9
+    effect: Persists role and active-state changes for a user.
+    must_preserve: true
+branches:
+  - source_loc: apps/backend/src/routes/users.routes.js:8
+    condition: Request is not authenticated as admin
+    behavior: Rejects access before reading or changing users.
+    must_preserve: true
+error_paths:
+  - source_loc: apps/backend/src/controllers/users.controller.js:10
+    trigger: Invalid ID, missing changes or invalid role
+    outcome: Returns a JSON validation error and does not update the user.
+    contract: HTTP 400 JSON message
+    must_preserve: true
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: apps/backend/src/controllers/users.controller.js:9
+    scope: One user update per request.
+    isolation: MongoDB default
+    must_preserve: true

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function Navbar({ onBooking, isGallery, onBack, onLogin, loggedInUser }) {
+export function Navbar({ onBooking, isGallery, onBack, onLogin, onAdmin, loggedInUser }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -45,10 +45,22 @@ export function Navbar({ onBooking, isGallery, onBack, onLogin, loggedInUser }) 
       </div>
 
       {/* LADO DERECHO: Botón Reserva y Menú Móvil */}
-      <div className="nav-area-right" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
+      <div className="nav-area-right" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem' }}>
+        {loggedInUser?.role === 'admin' && (
+          <button 
+            className="btn-outline" 
+            type="button" 
+            onClick={onAdmin}
+            style={{ borderColor: '#ff6200', color: '#ff6200', fontSize: '0.7rem', whiteSpace: 'nowrap', padding: '0.5rem 0.85rem' }}
+          >
+            PANEL ADMIN
+          </button>
+        )}
+
         {!isGallery && <button className="nav-login" type="button" onClick={onLogin}>
           {loggedInUser ? loggedInUser.name : 'INICIAR SESIÓN'}
         </button>}
+        
         <button className="btn-orange" onClick={onBooking} style={{ whiteSpace: 'nowrap' }}>
           RESERVAR CITA
         </button>
@@ -68,6 +80,17 @@ export function Navbar({ onBooking, isGallery, onBack, onLogin, loggedInUser }) 
       <div className={`nav-mobile-menu ${mobileMenuOpen && !isGallery ? 'open' : ''}`}>
         {!isGallery && (
           <ul className="nav-mobile-links">
+            {loggedInUser?.role === 'admin' && (
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => { closeMobileMenu(); onAdmin && onAdmin(); }}
+                  style={{ background: 'none', border: 'none', color: '#ff6200', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'bold', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                >
+                  Panel de Administrador
+                </button>
+              </li>
+            )}
             <li><a href="#servicios" onClick={closeMobileMenu}>Servicios</a></li>
             <li><a href="#taller" onClick={closeMobileMenu}>El Taller</a></li>
             <li><a href="#contacto" onClick={closeMobileMenu}>Contacto</a></li>

@@ -6,6 +6,7 @@ import { contentStyles } from './contentStyles';
 import { galleryPageStyles } from './galleryPageStyles';
 import { responsiveStyles } from './responsiveStyles';
 import { loginStyles } from './loginStyles';
+import { adminStyles } from './adminStyles';
 
 export const Styles = () => (
   <style>{[
@@ -16,5 +17,6 @@ export const Styles = () => (
     galleryPageStyles(T),
     responsiveStyles(T),
     loginStyles(T),
+    adminStyles(T),
   ].join('\n')}</style>
 );

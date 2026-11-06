@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function Login({ onBack, onLogin }) {
+export function Login({ onBack, onLogin, onRegister }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -71,6 +71,9 @@ export function Login({ onBack, onLogin }) {
             </button>
           </form>
 
+          <p className="login-footnote">
+            ¿No tienes cuenta? <button className="login-link" type="button" onClick={onRegister}>Regístrate aquí</button>
+          </p>
           <p className="login-footnote">¿Necesitas ayuda? <a href="mailto:contacto@mototaller.com">Contáctanos</a></p>
         </div>
         <span className="login-panel-mark">MOTO.TALLER <span>© 2026</span></span>

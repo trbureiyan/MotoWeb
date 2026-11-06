@@ -2,22 +2,43 @@ import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { IconX } from './Icons';
+import { BrandLogo } from './BrandLogo';
 import { T } from '../styles/tokens';
 
-const TARGET_BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI'];
-const FALLBACK_BRANDS = [...TARGET_BRANDS, 'OTRO'];
-const MOTIVOS = ['MANTENIMIENTO PREVENTIVO', 'TUNING ECU / MAPEO', 'FRENOS', 'DIAGNÓSTICO', 'PREPARACIÓN CIRCUITO', 'OTRO'];
+const TARGET_BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI', 'APRILIA'];
+const FALLBACK_BRANDS = TARGET_BRANDS.map(name => ({ name, slug: name.toLowerCase(), logoUrl: '' }));
+const MOTIVOS = ['MANTENIMIENTO PREVENTIVO', 'TUNING ECU / MAPEO', 'FRENOS', 'DIAGNÓSTICO', 'PREPARACIÓN CIRCUITO'];
+const CUSTOM_BRAND = 'CUSTOM';
+
+function BrandOption({ brand, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      className={`brand-btn brand-logo-btn${selected ? ' selected' : ''}`}
+      onClick={onClick}
+      aria-label={brand.name}
+      title={brand.name}
+    >
+      <BrandLogo brand={brand} className="brand-option-logo" />
+    </button>
+  );
+}
 
 export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialData }) {
   const [step, setStep] = useState(initialData?.step ?? 0);
   const [data, setData] = useState(initialData?.data || {
     brand: '',
-    otraMarca: '',
+    brandName: '',
+    brandRequestId: '',
+    brandRequestName: '',
+    brandRequestOpen: false,
     motivo: '',
-    otroMotivo: '',
     fecha: '',
     modelo: ''
   });
+  const [brandRequestOpen, setBrandRequestOpen] = useState(initialData?.data?.brandRequestOpen || false);
+  const [brandRequestLoading, setBrandRequestLoading] = useState(false);
+  const [brandRequestError, setBrandRequestError] = useState('');
   const [brands, setBrands] = useState([]);
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [done, setDone] = useState(false);
@@ -42,7 +63,7 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data) || data.length === 0) throw new Error('No hay marcas disponibles');
-        setBrands(data.filter(brand => brand.isActive !== false).map(brand => brand.name));
+        setBrands(data.filter(brand => brand.isActive !== false));
       })
       .catch(() => setBrands(FALLBACK_BRANDS))
       .finally(() => setLoadingBrands(false));
@@ -62,13 +83,11 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
   const canNext = () => {
     if (step === 0) {
       if (!data.brand) return false;
-      if (data.brand === 'OTRO') return (data.otraMarca || '').trim().length > 1;
+      if (data.brand === CUSTOM_BRAND) return Boolean(data.brandRequestId && data.brandName);
       return true;
     }
     if (step === 1) {
-      if (!data.motivo) return false;
-      if (data.motivo === 'OTRO') return (data.otroMotivo || '').trim().length > 2;
-      return true;
+      return MOTIVOS.includes(data.motivo);
     }
     if (step === 2) return data.fecha && data.modelo.trim().length > 2;
     if (step === 3) return true;
@@ -77,13 +96,12 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
 
   const today = new Date().toISOString().split('T')[0];
 
-  const displayBrand = data.brand === 'OTRO' 
-    ? (data.otraMarca ? data.otraMarca.trim().toUpperCase() : 'OTRO')
-    : data.brand;
+  const selectedBrand = brands.find(brand => brand.slug === data.brand || brand.name === data.brand);
+  const displayBrand = data.brand === CUSTOM_BRAND
+    ? data.brandName
+    : selectedBrand?.name || data.brandName || data.brand;
 
-  const displayMotivo = data.motivo === 'OTRO'
-    ? (data.otroMotivo ? `OTRO: ${data.otroMotivo.trim().toUpperCase()}` : 'OTRO')
-    : data.motivo;
+  const displayMotivo = data.motivo;
 
   const confirmAppointment = async () => {
     setSubmitting(true);
@@ -94,8 +112,10 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          brand: data.brand,
-          service: data.motivo === 'OTRO' ? 'OTRO' : data.motivo,
+          ...(data.brand === CUSTOM_BRAND
+            ? { brandRequestId: data.brandRequestId }
+            : { brand: data.brand }),
+          service: data.motivo,
           motorcycleModel: data.modelo,
           requestedDate: data.fecha
         })
@@ -103,10 +123,48 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || 'No fue posible registrar la cita.');
       setDone(true);
+      window.dispatchEvent(new Event('notifications:updated'));
+      window.dispatchEvent(new Event('appointments:updated'));
     } catch (error) {
       setSubmitError(error.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const submitBrandRequest = async (event) => {
+    event.preventDefault();
+    setBrandRequestError('');
+    if (!loggedInUser) {
+      onRequireLogin?.({
+        step,
+        data: { ...data, brandRequestOpen: true }
+      });
+      return;
+    }
+
+    setBrandRequestLoading(true);
+    try {
+      const response = await fetch('/api/brands/requests', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.brandRequestName })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'No fue posible enviar la solicitud.');
+      setData(current => ({
+        ...current,
+        brand: CUSTOM_BRAND,
+        brandName: result.name,
+        brandRequestId: result.id,
+        brandRequestOpen: false
+      }));
+      setBrandRequestOpen(false);
+    } catch (error) {
+      setBrandRequestError(error.message || 'No se pudo conectar con el servidor.');
+    } finally {
+      setBrandRequestLoading(false);
     }
   };
 
@@ -168,26 +226,36 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
                       aria-busy="true"
                     ></div>
                   ) : (
-                    brands.map(b => (
+                    <>
+                      {brands.map(brand => (
+                        <BrandOption
+                          key={brand.id || brand.slug}
+                          brand={brand}
+                          selected={data.brand === brand.slug || data.brand === brand.name}
+                          onClick={() => setData(current => ({
+                            ...current,
+                            brand: brand.slug || brand.name,
+                            brandName: brand.name,
+                            brandRequestId: ''
+                          }))}
+                        />
+                      ))}
                       <button
-                        key={b}
                         type="button"
-                        className={`brand-btn${data.brand === b ? ' selected' : ''}`}
-                        onClick={() => update('brand', b)}
-                      >{b}</button>
-                    ))
+                        className="brand-btn brand-other-btn"
+                        onClick={() => {
+                          setBrandRequestError('');
+                          setBrandRequestOpen(true);
+                          update('brandRequestOpen', true);
+                        }}
+                      >
+                        <span aria-hidden="true">+</span> OTRA MARCA
+                      </button>
+                    </>
                   )}
                 </div>
-
-                {data.brand === 'OTRO' && (
-                  <input
-                    className="modal-input"
-                    autoFocus
-                    style={{ marginTop: '0.5rem', marginBottom: 0 }}
-                    placeholder="Especifícanos la marca de tu moto (ej: Royal Enfield, Bajaj, Aprilia)"
-                    value={data.otraMarca || ''}
-                    onChange={e => update('otraMarca', e.target.value)}
-                  />
+                {data.brand === CUSTOM_BRAND && (
+                  <p className="brand-review-note">Marca en revisión. Puedes reservar mientras el taller revisa la solicitud.</p>
                 )}
               </div>
             )}
@@ -195,24 +263,13 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.5rem' }}>
                 {MOTIVOS.map(m => (
-                  <div key={m} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <button
-                      type="button"
-                      className={`brand-btn${data.motivo === m ? ' selected' : ''}`}
-                      style={{ textAlign: 'left', padding: '0.85rem 1rem' }}
-                      onClick={() => update('motivo', m)}
-                    >{m}</button>
-                    {m === 'OTRO' && data.motivo === 'OTRO' && (
-                      <input
-                        className="modal-input"
-                        autoFocus
-                        style={{ marginTop: '0.2rem', marginBottom: 0 }}
-                        placeholder="Especifiquenos su servicio deseado"
-                        value={data.otroMotivo || ''}
-                        onChange={e => update('otroMotivo', e.target.value)}
-                      />
-                    )}
-                  </div>
+                  <button
+                    key={m}
+                    type="button"
+                    className={`brand-btn${data.motivo === m ? ' selected' : ''}`}
+                    style={{ textAlign: 'left', padding: '0.85rem 1rem' }}
+                    onClick={() => update('motivo', m)}
+                  >{m}</button>
                 ))}
               </div>
             )}
@@ -247,6 +304,9 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
                     <span className="summary-label">MARCA:</span>
                     <span className="summary-value">{displayBrand || 'NO DEFINIDA'}</span>
                   </div>
+                  {data.brand === CUSTOM_BRAND && (
+                    <p className="brand-review-note">La marca se guardará en la cita con el nombre sugerido y quedará pendiente de revisión por el taller.</p>
+                  )}
                   <div className="summary-row">
                     <span className="summary-label">MODELO:</span>
                     <span className="summary-value">{data.modelo || 'NO DEFINIDO'}</span>
@@ -335,6 +395,85 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
           </>
         )}
       </div>
+      {brandRequestOpen && (
+        <div
+          className="brand-request-overlay"
+          onClick={event => {
+            event.stopPropagation();
+            setBrandRequestOpen(false);
+            update('brandRequestOpen', false);
+          }}
+          onKeyDown={event => {
+            event.stopPropagation();
+            if (event.key === 'Escape') {
+              setBrandRequestOpen(false);
+              update('brandRequestOpen', false);
+            }
+          }}
+        >
+          <section
+            className="brand-request-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="brand-request-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              type="button"
+              aria-label="Cerrar"
+              onClick={() => {
+                setBrandRequestOpen(false);
+                update('brandRequestOpen', false);
+              }}
+            >
+              <IconX />
+            </button>
+            <div className="modal-step-label">SOLICITUD DE MARCA</div>
+            <h2 className="modal-title" id="brand-request-title">¿NO ENCUENTRAS TU MARCA?</h2>
+            <p className="modal-sub">
+              Envía el nombre y el taller revisará la solicitud. El equipo administrador agregará el identificador y el logo.
+            </p>
+            <form onSubmit={submitBrandRequest}>
+              <label className="brand-request-label" htmlFor="brand-request-name">NOMBRE DE LA MARCA</label>
+              <input
+                className="modal-input"
+                id="brand-request-name"
+                autoFocus
+                maxLength={80}
+                required
+                minLength={2}
+                value={data.brandRequestName || ''}
+                onChange={event => update('brandRequestName', event.target.value)}
+                placeholder="Ej. Royal Enfield"
+              />
+              {brandRequestError && <p className="login-error" role="alert">{brandRequestError}</p>}
+              {!loggedInUser && (
+                <p className="brand-review-note">Para enviar una sugerencia necesitas iniciar sesión. El nombre escrito se conservará.</p>
+              )}
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn-back"
+                  onClick={() => {
+                    setBrandRequestOpen(false);
+                    update('brandRequestOpen', false);
+                  }}
+                >
+                  CANCELAR
+                </button>
+                <button
+                  className="btn-orange"
+                  type="submit"
+                  disabled={brandRequestLoading || (loggedInUser && (data.brandRequestName || '').trim().length < 2)}
+                >
+                  {brandRequestLoading ? 'ENVIANDO…' : loggedInUser ? 'ENVIAR SOLICITUD' : 'INICIAR SESIÓN →'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

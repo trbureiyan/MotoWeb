@@ -8,9 +8,11 @@ import {
   IconPlus, 
   IconCheck, 
   IconX,
-  IconShield
+  IconShield,
+  IconCurrencyDollar
 } from './Icons';
 import { T } from '../styles/tokens';
+import { GalleryImageModal } from './Gallery';
 
 const apiRequest = async (path, options = {}) => {
   const response = await fetch(path, {
@@ -26,6 +28,13 @@ const apiRequest = async (path, options = {}) => {
   if (!response.ok) throw new Error(data?.message || 'La operación no pudo completarse.');
   return data;
 };
+
+const createBrandSlug = (name) => name
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '');
 
 // Datos iniciales de demostración mientras el backend completa los controladores
 const INITIAL_APPOINTMENTS = [
@@ -138,14 +147,23 @@ const INITIAL_USERS = [
   { id: 'usr-005', name: 'Mateo Sandoval', email: 'mateo.sandoval@live.com', phone: '3001234987', role: 'client', isActive: false }
 ];
 
-export function AdminPanel({ onBack, loggedInUser }) {
+export function AdminPanel({
+  onBack,
+  loggedInUser,
+  galleryImages = [],
+  galleryLoading = false,
+  galleryError = '',
+  onAddGalleryImage
+}) {
   const [activeTab, setActiveTab] = useState('citas');
   
   // Estados de datos
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [brandRequests, setBrandRequests] = useState([]);
   const [users, setUsers] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [apiError, setApiError] = useState('');
 
   // Estados de filtros y búsqueda
@@ -155,33 +173,50 @@ export function AdminPanel({ onBack, loggedInUser }) {
   // Estados para modales de edición / creación
   const [editingService, setEditingService] = useState(null);
   const [editingBrand, setEditingBrand] = useState(null);
+  const [editingBrandRequest, setEditingBrandRequest] = useState(null);
   const [viewingNotesApt, setViewingNotesApt] = useState(null);
+  const [cancellingAppointment, setCancellingAppointment] = useState(null);
+  const [completingAppointment, setCompletingAppointment] = useState(null);
+  const [addingGalleryImage, setAddingGalleryImage] = useState(false);
 
   useEffect(() => {
     Promise.all([
       apiRequest('/api/appointments'),
       apiRequest('/api/services?active=false'),
       apiRequest('/api/brands?active=false'),
-      apiRequest('/api/users')
+      apiRequest('/api/brands/requests'),
+      apiRequest('/api/users'),
+      apiRequest('/api/payments')
     ])
-      .then(([appointmentData, serviceData, brandData, userData]) => {
+      .then(([appointmentData, serviceData, brandData, brandRequestData, userData, paymentData]) => {
         setAppointments(appointmentData || []);
         setServices(serviceData || []);
         setBrands(brandData || []);
+        setBrandRequests(brandRequestData || []);
         setUsers(userData || []);
+        setPayments(paymentData || []);
       })
       .catch(error => setApiError(error.message));
   }, []);
 
   // Controladores de Citas
-  const updateAppointmentStatus = async (id, newStatus) => {
+  const updateAppointmentStatus = async (id, newStatus, statusReason, paymentAmount) => {
     try {
       setApiError('');
       const updated = await apiRequest(`/api/appointments/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({
+          status: newStatus,
+          ...(statusReason !== undefined ? { statusReason } : {}),
+          ...(paymentAmount !== undefined ? { paymentAmount } : {})
+        })
       });
       setAppointments(prev => prev.map(a => a.id === id ? updated : a));
+      if (newStatus === 'cancelled') setCancellingAppointment(null);
+      if (newStatus === 'completed') {
+        setCompletingAppointment(null);
+        window.dispatchEvent(new Event('appointments:updated'));
+      }
     } catch (error) {
       setApiError(error.message);
     }
@@ -256,6 +291,23 @@ export function AdminPanel({ onBack, loggedInUser }) {
         ? prev.map(item => item.id === brandData.id ? saved : item)
         : [saved, ...prev]);
       setEditingBrand(null);
+    } catch (error) {
+      setApiError(error.message);
+    }
+  };
+
+  const reviewBrandRequest = async (request, reviewData) => {
+    setApiError('');
+    try {
+      const saved = await apiRequest(`/api/brands/requests/${request.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(reviewData)
+      });
+      setBrandRequests(prev => prev.map(item => item.id === saved.id ? saved : item));
+      if (saved.brand) {
+        setBrands(prev => [saved.brand, ...prev.filter(item => item.id !== saved.brand.id)]);
+      }
+      setEditingBrandRequest(null);
     } catch (error) {
       setApiError(error.message);
     }
@@ -368,6 +420,23 @@ export function AdminPanel({ onBack, loggedInUser }) {
           <IconUsers size={16} />
           USUARIOS Y CLIENTES
           <span className="admin-tab-badge">{users.length}</span>
+        </button>
+
+        <button
+          className={`admin-tab-btn${activeTab === 'pagos' ? ' active' : ''}`}
+          onClick={() => { setActiveTab('pagos'); setSearchTerm(''); }}
+        >
+          <IconCurrencyDollar size={18} />
+          HISTORIAL DE PAGOS
+          <span className="admin-tab-badge">{payments.length}</span>
+        </button>
+
+        <button
+          className={`admin-tab-btn${activeTab === 'galeria' ? ' active' : ''}`}
+          onClick={() => { setActiveTab('galeria'); setSearchTerm(''); }}
+        >
+          GALERÍA
+          <span className="admin-tab-badge">{galleryImages.length}</span>
         </button>
       </nav>
 
@@ -486,19 +555,19 @@ export function AdminPanel({ onBack, loggedInUser }) {
                                 <IconCheck size={12} /> CONFIRMAR
                               </button>
                             )}
-                            {apt.status === 'confirmed' && (
+                            {(apt.status === 'confirmed' || (apt.status === 'completed' && !apt.payment)) && (
                               <button 
                                 className="btn-action-icon success"
-                                onClick={() => updateAppointmentStatus(apt.id, 'completed')}
-                                title="Marcar como entregada"
+                                onClick={() => setCompletingAppointment(apt)}
+                                title={apt.status === 'completed' ? 'Definir monto final' : 'Marcar como entregada'}
                               >
-                                <IconCheck size={12} /> COMPLETAR
+                                <IconCheck size={12} /> {apt.status === 'completed' ? 'DEFINIR MONTO' : 'COMPLETAR'}
                               </button>
                             )}
                             {apt.status !== 'cancelled' && apt.status !== 'completed' && (
                               <button 
                                 className="btn-action-icon danger"
-                                onClick={() => updateAppointmentStatus(apt.id, 'cancelled')}
+                                onClick={() => setCancellingAppointment(apt)}
                                 title="Cancelar cita"
                               >
                                 CANCELAR
@@ -605,7 +674,7 @@ export function AdminPanel({ onBack, loggedInUser }) {
             <div className="admin-header-row">
               <div>
                 <h1 className="admin-view-title">MARCAS AUTORIZADAS</h1>
-                <p className="admin-view-sub">Fabricantes soportados por el herramental y diagnóstico del taller.</p>
+                <p className="admin-view-sub">Fabricantes autorizados y solicitudes enviadas por clientes.</p>
               </div>
               <button 
                 className="btn-orange" 
@@ -614,6 +683,54 @@ export function AdminPanel({ onBack, loggedInUser }) {
               >
                 <IconPlus size={14} /> NUEVA MARCA
               </button>
+            </div>
+
+            <div className="admin-table-container" style={{ marginBottom: '2rem' }}>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>SOLICITUD</th>
+                    <th>CLIENTE</th>
+                    <th>ESTADO</th>
+                    <th>FECHA</th>
+                    <th>ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {brandRequests.map(request => (
+                    <tr key={request.id}>
+                      <td style={{ fontWeight: 800, color: T.text }}>{request.name}</td>
+                      <td>{request.user?.name || request.user?.email || 'CLIENTE'}</td>
+                      <td>
+                        <span className={`badge-status ${request.status === 'pending' ? 'pending' : request.status === 'approved' ? 'active' : 'inactive'}`}>
+                          {request.status === 'pending' ? 'EN REVISIÓN' : request.status === 'approved' ? 'APROBADA' : 'RECHAZADA'}
+                        </span>
+                      </td>
+                      <td>{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}</td>
+                      <td>
+                        {request.status === 'pending' && (
+                          <button
+                            className="btn-action-icon"
+                            onClick={() => {
+                              setApiError('');
+                              setEditingBrandRequest({
+                                ...request,
+                                slug: createBrandSlug(request.name),
+                                logoUrl: ''
+                              });
+                            }}
+                          >
+                            <IconEdit size={12} /> REVISAR
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {!brandRequests.length && (
+                    <tr><td colSpan="5" style={{ color: T.muted, textAlign: 'center' }}>No hay solicitudes de marca.</td></tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
             <div className="admin-table-container">
@@ -750,7 +867,122 @@ export function AdminPanel({ onBack, loggedInUser }) {
             </div>
           </section>
         )}
+
+        {activeTab === 'pagos' && (
+          <section>
+            <div className="admin-header-row">
+              <div>
+                <h1 className="admin-view-title">HISTORIAL DE PAGOS</h1>
+                <p className="admin-view-sub">Consulta los pagos registrados con los datos básicos del cliente.</p>
+              </div>
+            </div>
+
+            <div className="admin-toolbar">
+              <div className="admin-search-wrap">
+                <input
+                  className="admin-search-input"
+                  placeholder="Buscar por nombre o correo..."
+                  value={searchTerm}
+                  onChange={event => setSearchTerm(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>USUARIO</th>
+                    <th>CORREO ELECTRÓNICO</th>
+                    <th>MONTO PAGADO</th>
+                    <th>FECHA DE PAGO</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments
+                    .filter(payment => (
+                      payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      payment.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
+                    ))
+                    .map(payment => (
+                      <tr key={payment.id}>
+                        <td style={{ fontWeight: 700 }}>{payment.userName}</td>
+                        <td style={{ fontFamily: T.mono, color: T.muted }}>{payment.userEmail}</td>
+                        <td style={{ fontFamily: T.mono }}>
+                          ${Number(payment.amount).toLocaleString('es-CO')} COP
+                        </td>
+                        <td>
+                          {payment.date
+                            ? new Date(payment.date).toLocaleString('es-CO', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short'
+                            })
+                            : 'FECHA NO DISPONIBLE'}
+                        </td>
+                      </tr>
+                    ))}
+                  {!payments.length && (
+                    <tr>
+                      <td colSpan={4} className="admin-empty-state">AÚN NO HAY PAGOS REGISTRADOS</td>
+                    </tr>
+                  )}
+                  {!!payments.length && !payments.some(payment => (
+                    payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    payment.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
+                  )) && (
+                    <tr>
+                      <td colSpan={4} className="admin-empty-state">NO HAY PAGOS QUE COINCIDAN CON LA BÚSQUEDA</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'galeria' && (
+          <section>
+            <div className="admin-header-row">
+              <div>
+                <h1 className="admin-view-title">GALERÍA DEL TALLER</h1>
+                <p className="admin-view-sub">Gestiona las imágenes visibles en la página.</p>
+              </div>
+              <button className="btn-orange" type="button" onClick={() => setAddingGalleryImage(true)}>
+                AGREGAR IMAGEN
+              </button>
+            </div>
+
+            {galleryError ? (
+              <p role="alert" className="gallery-status-error">{galleryError}</p>
+            ) : galleryLoading ? (
+              <p className="admin-empty-state">CARGANDO IMÁGENES…</p>
+            ) : galleryImages.length === 0 ? (
+              <p className="admin-empty-state">AÚN NO HAY IMÁGENES. USA “AGREGAR IMAGEN” PARA CREAR LA PRIMERA.</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+                {galleryImages.map(image => (
+                  <article key={image.id} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${T.border}` }}>
+                    <img
+                      src={image.src}
+                      alt={image.label}
+                      loading="lazy"
+                      style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', display: 'block' }}
+                    />
+                    <p style={{ margin: 0, padding: '0.75rem', color: T.text, fontSize: '0.8rem' }}>{image.label}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
+
+      {addingGalleryImage && (
+        <GalleryImageModal
+          onClose={() => setAddingGalleryImage(false)}
+          onSave={onAddGalleryImage}
+        />
+      )}
 
       {/* MODAL: NOTAS DE CITA */}
       {viewingNotesApt && (
@@ -782,6 +1014,85 @@ export function AdminPanel({ onBack, loggedInUser }) {
                 GUARDAR NOTAS
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {cancellingAppointment && (
+        <div className="admin-modal-overlay" onClick={() => setCancellingAppointment(null)}>
+          <div className="admin-modal-card" onClick={event => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setCancellingAppointment(null)}><IconX /></button>
+            <div className="admin-form-label">CANCELAR CITA</div>
+            <h2 className="admin-view-title" style={{ fontSize: '1.1rem', margin: '0.4rem 0 1rem' }}>
+              {cancellingAppointment.brand} · {cancellingAppointment.motorcycleModel}
+            </h2>
+            <form onSubmit={event => {
+              event.preventDefault();
+              const reason = new FormData(event.currentTarget).get('statusReason').trim();
+              updateAppointmentStatus(cancellingAppointment.id, 'cancelled', reason);
+            }}>
+              <div className="admin-form-group">
+                <label className="admin-form-label" htmlFor="appointment-cancel-reason">MOTIVO QUE SE ENVIARÁ AL CLIENTE</label>
+                <textarea
+                  className="admin-form-textarea"
+                  id="appointment-cancel-reason"
+                  name="statusReason"
+                  maxLength={500}
+                  rows={4}
+                  required
+                  placeholder="Indica brevemente por qué se cancela la cita."
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
+                <button type="button" className="btn-outline" onClick={() => setCancellingAppointment(null)}>VOLVER</button>
+                <button type="submit" className="btn-orange">CANCELAR Y NOTIFICAR</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {completingAppointment && (
+        <div className="admin-modal-overlay" onClick={() => setCompletingAppointment(null)}>
+          <div className="admin-modal-card" onClick={event => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setCompletingAppointment(null)}><IconX /></button>
+            <div className="admin-form-label">
+              {completingAppointment.status === 'completed' ? 'DEFINIR MONTO FINAL' : 'COMPLETAR CITA'}
+            </div>
+            <h2 className="admin-view-title" style={{ fontSize: '1.1rem', margin: '0.4rem 0 1rem' }}>
+              {completingAppointment.brand} · {completingAppointment.motorcycleModel}
+            </h2>
+            <p className="admin-view-sub" style={{ marginBottom: '1rem' }}>
+              {completingAppointment.status === 'completed'
+                ? 'Define el monto final para habilitar el pago de esta cita.'
+                : 'Define el monto final del servicio. Este será el valor que verá el cliente y se registrará en pagos.'}
+            </p>
+            <form onSubmit={event => {
+              event.preventDefault();
+              const amount = Number(new FormData(event.currentTarget).get('paymentAmount'));
+              updateAppointmentStatus(completingAppointment.id, 'completed', undefined, amount);
+            }}>
+              <div className="admin-form-group">
+                <label className="admin-form-label" htmlFor="appointment-payment-amount">MONTO FINAL (COP)</label>
+                <input
+                  className="admin-form-input"
+                  id="appointment-payment-amount"
+                  name="paymentAmount"
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  defaultValue={completingAppointment.payment?.amount || ''}
+                  placeholder="Ej. 250000"
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
+                <button type="button" className="btn-outline" onClick={() => setCompletingAppointment(null)}>VOLVER</button>
+                <button type="submit" className="btn-orange">
+                  {completingAppointment.status === 'completed' ? 'GUARDAR MONTO' : 'COMPLETAR Y NOTIFICAR'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -872,6 +1183,55 @@ export function AdminPanel({ onBack, loggedInUser }) {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
                 <button type="button" className="btn-outline" onClick={() => setEditingBrand(null)}>CANCELAR</button>
                 <button type="submit" className="btn-orange">GUARDAR MARCA</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingBrandRequest && (
+        <div className="admin-modal-overlay" onClick={() => setEditingBrandRequest(null)}>
+          <div className="admin-modal-card" onClick={event => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setEditingBrandRequest(null)}><IconX /></button>
+            <div className="admin-form-label">SOLICITUD DE MARCA</div>
+            <h2 className="admin-view-title" style={{ fontSize: '1.1rem', margin: '0.4rem 0 1rem' }}>
+              COMPLETAR DATOS Y APROBAR
+            </h2>
+            <form onSubmit={event => {
+              event.preventDefault();
+              const fd = new FormData(event.target);
+              reviewBrandRequest(editingBrandRequest, {
+                status: 'approved',
+                name: fd.get('name').trim(),
+                slug: fd.get('slug').trim(),
+                logoUrl: fd.get('logoUrl').trim()
+              });
+            }}>
+              {apiError && <p className="login-error" role="alert">{apiError}</p>}
+              <div className="admin-form-group">
+                <label className="admin-form-label" htmlFor="request-brand-name">NOMBRE DE LA MARCA</label>
+                <input id="request-brand-name" className="admin-form-input" name="name" defaultValue={editingBrandRequest.name} required />
+              </div>
+              <div className="admin-form-group">
+                <label className="admin-form-label" htmlFor="request-brand-slug">SLUG (IDENTIFICADOR)</label>
+                <input id="request-brand-slug" className="admin-form-input" name="slug" defaultValue={editingBrandRequest.slug} required />
+              </div>
+              <div className="admin-form-group">
+                <label className="admin-form-label" htmlFor="request-brand-logo">URL DEL LOGOTIPO (OPCIONAL)</label>
+                <input id="request-brand-logo" className="admin-form-input" name="logoUrl" defaultValue={editingBrandRequest.logoUrl} placeholder="https://..." />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginTop: '1.25rem' }}>
+                <button
+                  type="button"
+                  className="btn-action-icon danger"
+                  onClick={() => reviewBrandRequest(editingBrandRequest, { status: 'rejected' })}
+                >
+                  RECHAZAR
+                </button>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button type="button" className="btn-outline" onClick={() => setEditingBrandRequest(null)}>CANCELAR</button>
+                  <button type="submit" className="btn-orange">APROBAR MARCA</button>
+                </div>
               </div>
             </form>
           </div>

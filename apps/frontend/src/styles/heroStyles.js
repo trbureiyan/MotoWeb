@@ -97,4 +97,63 @@ export const heroStyles = (T) => `
       text-transform: uppercase;
       margin-top: 0.15rem;
     }
+    .brand-carousel {
+      display: flex;
+      align-items: center;
+      gap: clamp(1.25rem, 4vw, 3.5rem);
+      min-height: 96px;
+      padding: 1.1rem clamp(1.5rem, 6vw, 6rem);
+      overflow: hidden;
+      border-bottom: 1px solid ${T.border};
+      background: ${T.bg1};
+    }
+    .brand-carousel-label {
+      flex: 0 0 auto;
+      color: ${T.muted};
+      font: 500 0.62rem ${T.mono};
+      letter-spacing: 0.16em;
+      white-space: nowrap;
+    }
+    .brand-carousel-viewport {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+    }
+    .brand-carousel-track {
+      display: flex;
+      align-items: center;
+      width: max-content;
+    }
+    .brand-carousel-track.animated {
+      animation: brand-marquee 42s linear infinite;
+    }
+    .brand-carousel-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: clamp(100px, 12vw, 150px);
+      height: 48px;
+      padding: 0 1.5rem;
+      color: ${T.muted};
+      font: 700 0.7rem ${T.head};
+      letter-spacing: 0.08em;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .brand-carousel-logo {
+      display: block;
+      width: 100%;
+      height: 34px;
+      object-fit: contain;
+      filter: grayscale(1);
+      opacity: 0.72;
+      transition: filter 0.2s, opacity 0.2s;
+    }
+    .brand-carousel-item:hover .brand-carousel-logo { filter: grayscale(0); opacity: 1; }
+    @keyframes brand-marquee { to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) {
+      .brand-carousel-track.animated { animation-duration: 60s; }
+    }
   `;

@@ -29,6 +29,8 @@ export const loginStyles = (T) => `
   .login-footnote { margin-top: 1.5rem; text-align: center; color: ${T.muted}; font-size: .78rem; }
   .login-footnote a { color: ${T.orange}; text-decoration: none; }
   .login-footnote a:hover { text-decoration: underline; }
+  .login-link { padding: 0; background: none; border: 0; color: ${T.orange}; font: inherit; cursor: pointer; }
+  .login-link:hover { text-decoration: underline; }
   .login-panel-mark { position: absolute; bottom: 1.8rem; left: clamp(1.5rem, 4vw, 4rem); right: clamp(1.5rem, 4vw, 4rem); display: flex; justify-content: space-between; color: #777; font: 500 .58rem ${T.mono}; letter-spacing: .1em; }
   .login-panel-mark span { color: #555; }
   @media (max-width: 800px) { .login-page { grid-template-columns: 1fr; } .login-image { display: none; } .login-panel { min-height: 100vh; padding: 6rem 1.5rem 5rem; } .login-back { top: 1.6rem; left: 1.5rem; } .login-panel-mark { left: 1.5rem; right: 1.5rem; bottom: 1.2rem; } }

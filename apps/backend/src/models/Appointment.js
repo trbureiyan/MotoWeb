@@ -11,7 +11,15 @@ const appointmentSchema = new mongoose.Schema(
         brand: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Brand",
-            required: true
+            required: false
+        },
+        brandName: {
+            type: String,
+            trim: true
+        },
+        brandRequest: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "BrandRequest"
         },
         service: {
             type: mongoose.Schema.Types.ObjectId,
@@ -36,6 +44,11 @@ const appointmentSchema = new mongoose.Schema(
         adminNotes: {
             type: String,
             trim: true
+        },
+        statusReason: {
+            type: String,
+            trim: true,
+            maxlength: 500
         }
     },
     {

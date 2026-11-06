@@ -6,11 +6,13 @@ const galleryImageSchema = new mongoose.Schema(
         imageUrl: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            maxlength: 2048
         },
         caption: {
             type: String,
-            trim: true
+            trim: true,
+            maxlength: 200
         },
         service: {
             type: mongoose.Schema.Types.ObjectId,

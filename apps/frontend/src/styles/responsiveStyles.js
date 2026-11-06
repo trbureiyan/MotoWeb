@@ -2,6 +2,8 @@ export const responsiveStyles = (T) => `
     /* RESPONSIVE BREAKPOINTS */
     @media (max-width: 768px) {
       .nav-root { padding: 0 1rem; }
+      .nav-area-right { gap: .55rem !important; }
+      .nav-user { max-width: 5rem; overflow: hidden; text-overflow: ellipsis; }
       .nav-links { display: none; }
       .nav-mobile-toggle { display: block; }
       .nav-desktop-cta { display: none; }
@@ -43,6 +45,11 @@ export const responsiveStyles = (T) => `
 
       .footer-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
       .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+
+      .client-notifications-page { padding: 2.5rem 1rem; }
+      .client-appointment-details { grid-template-columns: 1fr; }
+      .client-appointment-reason { grid-column: auto; }
+      .client-payment-row { align-items: flex-start; flex-direction: column; }
     }
 
     @media (max-width: 480px) {
@@ -61,7 +68,12 @@ export const responsiveStyles = (T) => `
       .carousel-item { min-width: 260px; max-width: 300px; }
 
       .modal-box { padding: 1.5rem; max-width: 95vw; }
-      .brand-grid { grid-template-columns: 1fr; }
+      .brand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .client-notifications-tabs button { padding: .7rem .55rem; font-size: .58rem; }
+      .client-appointment-card, .client-notification-card { padding: 1rem; }
+      .client-appointment-card-header { flex-direction: column; }
+      .client-notification-card { align-items: flex-start; flex-direction: column; }
+      .client-notifications-header h1 { font-size: 1.6rem; }
 
       .gallery-masonry { columns: 1; }
     }

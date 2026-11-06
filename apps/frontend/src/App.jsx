@@ -15,7 +15,10 @@ import { Preloader } from './components/Preloader';
 import { SoftCursor } from './components/SoftCursor';
 import { Styles } from './styles/Styles';
 import { Login } from './components/Login';
+import { Register } from './components/Register';
 import { AdminPanel } from './components/AdminPanel';
+import { BrandsCarousel } from './components/BrandsCarousel';
+import { NotificationsPage } from './components/NotificationsPage';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -24,6 +27,9 @@ export function App() {
   const [activeView, setActiveView] = useState('home');
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [pendingBooking, setPendingBooking] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [galleryError, setGalleryError] = useState('');
   const appRef = useRef();
 
   useEffect(() => {
@@ -36,6 +42,42 @@ export function App() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch('/api/gallery')
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.message || 'No se pudo cargar la galería.');
+        setGalleryImages(data.map(image => ({
+          id: image.id || image._id,
+          src: image.imageUrl,
+          label: image.caption || 'Trabajo del taller',
+          displayOrder: image.displayOrder || 0
+        })));
+      })
+      .catch(error => setGalleryError(error.message))
+      .finally(() => setGalleryLoading(false));
+  }, []);
+
+  const addGalleryImage = async ({ imageUrl, caption }) => {
+    const response = await fetch('/api/gallery', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageUrl, caption })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.message || 'No se pudo agregar la imagen.');
+
+    const image = {
+      id: data.id || data._id,
+      src: data.imageUrl,
+      label: data.caption || 'Trabajo del taller',
+      displayOrder: data.displayOrder || 0
+    };
+    setGalleryImages(current => [...current, image].sort((a, b) => a.displayOrder - b.displayOrder));
+    setGalleryError('');
+  };
 
   useGSAP(() => {
     // Reveal simple
@@ -91,8 +133,19 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const showRegister = () => {
+    setActiveView('register');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const showAdminPanel = () => {
     setActiveView('admin');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const showNotifications = () => {
+    if (loggedInUser?.role !== 'client') return;
+    setActiveView('notifications');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -132,27 +185,56 @@ export function App() {
       <SoftCursor />
       <Styles />
       {activeView === 'login' ? (
-        <Login onBack={showHome} onLogin={handleLogin} />
+        <Login onBack={showHome} onLogin={handleLogin} onRegister={showRegister} />
+      ) : activeView === 'register' ? (
+        <Register onBack={showHome} onRegister={handleLogin} onLogin={showLogin} />
       ) : activeView === 'admin' ? (
-        <AdminPanel onBack={showHome} loggedInUser={loggedInUser} />
+        <AdminPanel
+          onBack={showHome}
+          loggedInUser={loggedInUser}
+          galleryImages={galleryImages}
+          galleryLoading={galleryLoading}
+          galleryError={galleryError}
+          onAddGalleryImage={addGalleryImage}
+        />
       ) : <>
       <Navbar 
         onBooking={() => setShowModal(true)} 
         isGallery={activeView === 'gallery'} 
+        isNotifications={activeView === 'notifications'}
+        currentView={activeView}
         onBack={showHome} 
         onLogin={showLogin}
         onLogout={handleLogout}
         onAdmin={showAdminPanel}
+        onNotifications={showNotifications}
         loggedInUser={loggedInUser}
       />
-      {activeView === 'gallery' ? (
-        <GalleryPage onBack={showHome} />
+      {activeView === 'notifications' && loggedInUser?.role === 'client' ? (
+        <NotificationsPage />
+      ) : activeView === 'gallery' ? (
+        <GalleryPage
+          onBack={showHome}
+          items={galleryImages}
+          isAdmin={loggedInUser?.role === 'admin'}
+          onAddImage={addGalleryImage}
+          loading={galleryLoading}
+          error={galleryError}
+        />
       ) : (
         <>
           <Hero onBooking={() => setShowModal(true)} />
+          <BrandsCarousel />
           <Servicios />
           <Testimonials />
-          <Gallery onViewMore={showGalleryPage} />
+          <Gallery
+            onViewMore={showGalleryPage}
+            items={galleryImages}
+            isAdmin={loggedInUser?.role === 'admin'}
+            onAddImage={addGalleryImage}
+            loading={galleryLoading}
+            error={galleryError}
+          />
           <Contact />
           <Footer />
         </>

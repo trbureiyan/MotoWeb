@@ -10,21 +10,6 @@ import { GradualBlur } from "./GradualBlur";
 
 gsap.registerPlugin(ScrollTrigger, Flip);
 
-const GALLERY_ITEMS = [
-  { id: 'g1', src: 'https://images.pexels.com/photos/17243626/pexels-photo-17243626.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'BMW S1000RR 2024 - Tuning ECU', stats: 'HP: 205 | TRQ: 83ft-lb' },
-  { id: 'g2', src: 'https://images.pexels.com/photos/8532387/pexels-photo-8532387.png?auto=compress&cs=tinysrgb&w=1000', label: 'Yamaha R1 - Suspensión', stats: 'SAG: 35mm | REB: 12 clicks' },
-  { id: 'g3', src: 'https://images.pexels.com/photos/30180721/pexels-photo-30180721.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'Kawasaki ZX-10R - Frenos Brembo', stats: 'ROTOR: 330mm | FLUID: DOT 5.1' },
-  { id: 'g4', src: 'https://images.unsplash.com/photo-1615172282427-9a57ef2d142e?w=1000&q=70&auto=format&fit=crop', label: 'Ducati Panigale V4 - Mapeo Dyno', stats: 'MAP: Race Evo | A/F: 13.2' },
-  { id: 'g5', src: 'https://images.pexels.com/photos/33203558/pexels-photo-33203558.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'Honda CBR 1000RR-R - Mantenimiento', stats: 'OIL: Motul 300V | FLTR: K&N' },
-  { id: 'g6', src: 'https://images.pexels.com/photos/17900720/pexels-photo-17900720.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'Suzuki GSX-R 1000 - Full Service', stats: 'CH: DID 520 | SPRK: 16/45' },
-  { id: 'g7', src: 'https://www.moto.ch/wp-content/uploads/2024/12/Honda-CB1000-Hornet_01-1300x867.jpg', label: 'Honda CB1000 Hornet SP 2024', stats: 'SYS: HESD | TRQ: 104Nm' },
-  { id: 'g8', src: 'https://images.pexels.com/photos/11605405/pexels-photo-11605405.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'Aprilia RSV4 - Puesta a punto', stats: 'MAP: Track | APRC: Active' },
-  { id: 'g9', src: 'https://images.pexels.com/photos/27184237/pexels-photo-27184237.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'Ducati Multistrada v4 - Detalle final', stats: 'AERO: Winglets | DESMO: OK' },
-  { id: 'g10', src: 'https://images.pexels.com/photos/33522279/pexels-photo-33522279.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'Triumph Street Triple - Revisión general', stats: 'QUICK: Up/Down | TFT: 5in' },
-  { id: 'g11', src: 'https://images.unsplash.com/photo-1656767112164-f9f59766357d?q=70&w=1000&auto=format&fit=crop', label: 'KTM 1290 Super Duke - Diagnóstico ECU', stats: 'MTC: Spin Adjust | ABS: Supermoto' },
-  { id: 'g12', src: 'https://images.pexels.com/photos/9064725/pexels-photo-9064725.jpeg?auto=compress&cs=tinysrgb&w=1000', label: 'BMW R nineT - Servicio premium', stats: 'SHAFT: Lube | BOXER: Sync' },
-];
-
 function GalleryGrid({
   items,
   variant = "masonry",
@@ -57,9 +42,85 @@ function GalleryGrid({
   );
 }
 
-export function Gallery({ onViewMore }) {
+export function GalleryImageModal({ onClose, onSave }) {
+  const [imageUrl, setImageUrl] = useState('');
+  const [caption, setCaption] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      await onSave({ imageUrl, caption });
+      onClose();
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="gallery-image-modal-overlay" onClick={(event) => {
+      if (event.target === event.currentTarget && !saving) onClose();
+    }}>
+      <form className="gallery-image-modal" onSubmit={submit} aria-labelledby="gallery-image-modal-title" role="dialog" aria-modal="true">
+        <button className="gallery-image-modal-close" type="button" onClick={onClose} aria-label="Cerrar" disabled={saving}>
+          ×
+        </button>
+        <h2 id="gallery-image-modal-title">Agregar imagen a la galería</h2>
+        <label htmlFor="gallery-image-url">Enlace de la imagen</label>
+        <input
+          id="gallery-image-url"
+          type="url"
+          value={imageUrl}
+          onChange={(event) => setImageUrl(event.target.value)}
+          placeholder="https://..."
+          required
+          autoFocus
+        />
+        <label htmlFor="gallery-image-caption">Descripción (opcional)</label>
+        <input
+          id="gallery-image-caption"
+          type="text"
+          value={caption}
+          onChange={(event) => setCaption(event.target.value)}
+          maxLength={200}
+          placeholder="Ej. Yamaha R1 - Suspensión"
+        />
+        {error && <p className="gallery-image-modal-error" role="alert">{error}</p>}
+        <div className="gallery-image-modal-actions">
+          <button type="button" className="btn-outline" onClick={onClose} disabled={saving}>Cancelar</button>
+          <button type="submit" className="btn-orange" disabled={saving}>
+            {saving ? 'GUARDANDO…' : 'AGREGAR IMAGEN'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function GalleryImageActions({ isAdmin, onAddImage }) {
+  return isAdmin ? (
+    <button className="btn-outline gallery-add-image-btn" onClick={onAddImage}>
+      AGREGAR IMAGEN
+    </button>
+  ) : null;
+}
+
+function GalleryLoadingState({ loading, error, empty }) {
+  if (loading) return <p className="gallery-status" role="status">Cargando galería…</p>;
+  if (error) return <p className="gallery-status gallery-status-error" role="alert">{error}</p>;
+  if (empty) return <p className="gallery-status">Aún no hay imágenes en la galería.</p>;
+  return null;
+}
+
+export function Gallery({ onViewMore, items, isAdmin, onAddImage, loading, error }) {
   const [lightbox, setLightbox] = useState(null);
-  const featuredItems = GALLERY_ITEMS.slice(0, 3);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const featuredItems = items.slice(0, 3);
 
   return (
     <section className="section gallery-section" id="taller">
@@ -72,12 +133,12 @@ export function Gallery({ onViewMore }) {
         <p className="section-sub reveal">
           Cada moto que entra al paddock recibe atencion de nivel competitivo y un reporte claro del trabajo.
         </p>
-        <GalleryGrid
-          items={featuredItems}
-          variant="featured"
-          onSelect={setLightbox}
-        />
+        <GalleryLoadingState loading={loading} error={error} empty={!items.length} />
+        {!loading && !error && featuredItems.length > 0 && (
+          <GalleryGrid items={featuredItems} variant="featured" onSelect={setLightbox} />
+        )}
         <div className="gallery-actions reveal">
+          <GalleryImageActions isAdmin={isAdmin} onAddImage={() => setShowImageModal(true)} />
           <button className="btn-orange" onClick={onViewMore}>
             VER MÁS
           </button>
@@ -119,20 +180,24 @@ export function Gallery({ onViewMore }) {
               />
             </div>
             <div className="lightbox-caption">
-              {lightbox.label} - {lightbox.stats}
+              {lightbox.label}
             </div>
           </div>
         </div>
+      )}
+      {showImageModal && (
+        <GalleryImageModal onClose={() => setShowImageModal(false)} onSave={onAddImage} />
       )}
     </section>
   );
 }
 
-export function GalleryPage({ onBack }) {
+export function GalleryPage({ onBack, items, isAdmin, onAddImage, loading, error }) {
   const containerRef = useRef(null);
   const scrollWrapperRef = useRef(null);
   const scrollContentRef = useRef(null);
   const [activeItem, setActiveItem] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useGSAP(
     () => {
@@ -170,7 +235,7 @@ export function GalleryPage({ onBack }) {
         },
       });
     },
-    { scope: containerRef },
+    { scope: containerRef, dependencies: [items.length] },
   );
 
   const openItem = (item, e) => {
@@ -229,6 +294,7 @@ export function GalleryPage({ onBack }) {
       <div className="hs-ui-layer">
         <div className="hs-header">
           <div className="section-label">Archivo completo del taller</div>
+          <GalleryImageActions isAdmin={isAdmin} onAddImage={() => setShowImageModal(true)} />
         </div>
       </div>
 
@@ -237,7 +303,7 @@ export function GalleryPage({ onBack }) {
           {/* Spacer for initial title */}
           <div className="hs-spacer" />
 
-          {GALLERY_ITEMS.map((item, i) => (
+          {!loading && !error && items.map((item) => (
             <div
               key={item.id}
               className="hs-item"
@@ -268,7 +334,6 @@ export function GalleryPage({ onBack }) {
                 </div>
                 <div className="hs-item-meta">
                   <h3>{item.label}</h3>
-                  <p className="hs-stats">{item.stats}</p>
                 </div>
               </div>
             </div>
@@ -341,7 +406,7 @@ export function GalleryPage({ onBack }) {
                 </div>
                 <div className="t-box">
                   <span>SPECS</span>
-                  <strong>{activeItem.item.stats}</strong>
+                  <strong>{activeItem.item.label}</strong>
                 </div>
                 <div className="t-box">
                   <span>SYSTEM</span>
@@ -351,6 +416,14 @@ export function GalleryPage({ onBack }) {
             </div>
           </div>
         </div>
+      )}
+      {(loading || error || (!items.length && !loading)) && (
+        <div className="gallery-page-status">
+          <GalleryLoadingState loading={loading} error={error} empty={!items.length} />
+        </div>
+      )}
+      {showImageModal && (
+        <GalleryImageModal onClose={() => setShowImageModal(false)} onSave={onAddImage} />
       )}
     </main>
   );

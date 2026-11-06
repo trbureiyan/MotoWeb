@@ -421,9 +421,84 @@ export const contentStyles = (T) => `
     }
     .gallery-actions {
       display: flex;
+      align-items: center;
+      gap: 1rem;
       justify-content: center;
       margin-top: 2rem;
     }
+    .gallery-add-image-btn { cursor: pointer; }
+    .gallery-status {
+      padding: 2rem 1rem;
+      color: ${T.muted};
+      text-align: center;
+      font-family: ${T.mono};
+    }
+    .gallery-status-error, .gallery-image-modal-error { color: #ff7777; }
+    .gallery-page-status {
+      position: fixed;
+      z-index: 20;
+      top: 50%;
+      left: 50%;
+      width: min(90vw, 36rem);
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+    }
+    .gallery-image-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.78);
+    }
+    .gallery-image-modal {
+      position: relative;
+      display: grid;
+      gap: 0.8rem;
+      width: min(100%, 30rem);
+      padding: 2rem;
+      border: 1px solid ${T.border};
+      background: ${T.bg2};
+      color: ${T.text};
+    }
+    .gallery-image-modal h2 {
+      margin: 0 2rem 0.5rem 0;
+      font-size: 1.2rem;
+    }
+    .gallery-image-modal label {
+      color: ${T.muted};
+      font-family: ${T.mono};
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+    .gallery-image-modal input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid ${T.border};
+      background: ${T.bg};
+      color: ${T.text};
+      font: inherit;
+    }
+    .gallery-image-modal input:focus { outline: 1px solid ${T.orange}; }
+    .gallery-image-modal-close {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      border: 0;
+      background: transparent;
+      color: ${T.text};
+      font-size: 1.8rem;
+      cursor: pointer;
+    }
+    .gallery-image-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    .gallery-image-modal-actions button { cursor: pointer; }
+    .gallery-image-modal-error { margin: 0; font-size: 0.85rem; }
     .gallery-page {
       min-height: 70vh;
       background: ${T.bg2};
@@ -776,6 +851,8 @@ export const contentStyles = (T) => `
       border-top: 2px solid ${T.orange};
       width: 100%;
       max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
       padding: 2rem;
       position: relative;
     }
@@ -848,6 +925,69 @@ export const contentStyles = (T) => `
       color: ${T.orange};
       background: ${T.orangeGlow};
     }
+    .brand-logo-btn {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.7rem;
+    }
+    .brand-logo-btn img {
+      width: 100%;
+      height: 48px;
+      object-fit: contain;
+    }
+    .brand-option-logo {
+      width: 100%;
+      max-height: 48px;
+      object-fit: contain;
+    }
+    .brand-other-btn {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      font-size: 0.68rem;
+    }
+    .brand-other-btn span { font-size: 1.15rem; color: ${T.orange}; }
+    .brand-review-note {
+      margin: 0.5rem 0 0;
+      padding: 0.75rem;
+      border-left: 2px solid ${T.orange};
+      background: ${T.bg2};
+      color: ${T.muted};
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+    .brand-request-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(0,0,0,0.92);
+    }
+    .brand-request-card {
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      padding: 2rem;
+      border: 1px solid ${T.border};
+      border-top: 2px solid ${T.orange};
+      background: ${T.bg1};
+    }
+    .brand-request-label {
+      display: block;
+      margin-bottom: 0.55rem;
+      color: #aaa;
+      font: 500 0.62rem ${T.mono};
+      letter-spacing: 0.12em;
+    }
     .modal-input {
       width: 100%;
       background: ${T.bg2};
@@ -868,6 +1008,177 @@ export const contentStyles = (T) => `
       align-items: center;
       margin-top: 1.5rem;
     }
+
+    /* CLIENT APPOINTMENTS AND NOTIFICATIONS */
+    .client-notifications-page {
+      min-height: calc(100vh - 64px);
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: clamp(2.5rem, 6vw, 5rem) 1.5rem;
+    }
+    .client-notifications-header { margin-bottom: 2rem; }
+    .client-page-kicker, .client-card-kicker {
+      display: block;
+      color: ${T.orange};
+      font: 500 .65rem ${T.mono};
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+    .client-notifications-header h1 {
+      margin: .7rem 0;
+      font: 800 clamp(1.7rem, 4vw, 2.5rem)/1.1 ${T.head};
+      letter-spacing: -.03em;
+    }
+    .client-notifications-header h1 em { color: ${T.orange}; font-style: normal; }
+    .client-notifications-header p { color: ${T.muted}; font-size: .9rem; }
+    .client-notifications-tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid ${T.border};
+    }
+    .client-notifications-tabs button {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      padding: .8rem 1rem;
+      color: ${T.muted};
+      background: transparent;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      font: 600 .68rem ${T.mono};
+      letter-spacing: .08em;
+      cursor: pointer;
+    }
+    .client-notifications-tabs button.active { color: ${T.text}; border-bottom-color: ${T.orange}; }
+    .client-notifications-tabs button span {
+      min-width: 1.25rem;
+      padding: .15rem .35rem;
+      color: ${T.orange};
+      background: ${T.orangeGlow};
+      text-align: center;
+    }
+    .client-appointment-list, .client-notification-list { display: grid; gap: .85rem; }
+    .client-appointment-card, .client-notification-card {
+      padding: 1.25rem;
+      border: 1px solid ${T.border};
+      background: ${T.bg1};
+    }
+    .client-appointment-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid ${T.border};
+    }
+    .client-appointment-card h2 {
+      margin: .35rem 0 0;
+      font: 700 1rem ${T.head};
+      text-transform: uppercase;
+    }
+    .client-status-badge {
+      flex: 0 0 auto;
+      padding: .3rem .55rem;
+      border: 1px solid ${T.orangeDim};
+      color: ${T.orange};
+      background: ${T.orangeGlow};
+      font: 700 .6rem ${T.mono};
+      letter-spacing: .08em;
+    }
+    .client-status-badge.confirmed { color: #60a5fa; border-color: #2563eb; background: rgba(59,130,246,.15); }
+    .client-status-badge.completed { color: #4ade80; border-color: #16a34a; background: rgba(34,197,94,.15); }
+    .client-status-badge.cancelled { color: #f87171; border-color: #dc2626; background: rgba(239,68,68,.15); }
+    .client-appointment-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      padding-top: 1rem;
+    }
+    .client-appointment-details div { display: grid; gap: .3rem; }
+    .client-appointment-details span {
+      color: ${T.muted};
+      font: 500 .58rem ${T.mono};
+      letter-spacing: .1em;
+    }
+    .client-appointment-details strong { font-size: .8rem; font-weight: 500; }
+    .client-appointment-reason { grid-column: 1 / -1; }
+    .client-payment-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid ${T.border};
+    }
+    .client-payment-row p { color: ${T.muted}; font-size: .78rem; }
+    .client-payment-row p strong, .client-payment-amount strong { color: ${T.text}; font-family: ${T.mono}; }
+    .client-payment-row .btn-orange, .client-payment-modal .btn-orange {
+      padding: .75rem 1rem;
+      font: 700 .65rem ${T.mono};
+      letter-spacing: .08em;
+    }
+    .client-notification-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+    }
+    .client-notification-card.unread { border-left: 2px solid ${T.orange}; }
+    .client-notification-copy p { margin: .5rem 0 0; color: ${T.text}; font-size: .85rem; line-height: 1.6; }
+    .client-mark-read {
+      flex: 0 0 auto;
+      padding: .55rem .7rem;
+      border: 1px solid ${T.border};
+      color: ${T.orange};
+      background: transparent;
+      font: 600 .58rem ${T.mono};
+      cursor: pointer;
+    }
+    .client-mark-read:hover { border-color: ${T.orange}; }
+    .client-page-empty, .client-page-error {
+      padding: 1.5rem;
+      border: 1px solid ${T.border};
+      color: ${T.muted};
+      background: ${T.bg1};
+      font: 500 .7rem ${T.mono};
+      letter-spacing: .06em;
+      text-align: center;
+    }
+    .client-page-error { margin-bottom: 1rem; border-color: #dc2626; color: #f87171; }
+    .client-payment-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(0,0,0,.88);
+    }
+    .client-payment-modal {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      padding: 2rem;
+      border: 1px solid ${T.border};
+      border-top: 2px solid ${T.orange};
+      background: ${T.bg1};
+    }
+    .client-payment-modal h2 { margin: .7rem 0; font: 800 1.25rem ${T.head}; }
+    .client-payment-modal > p { margin: 1rem 0; color: ${T.muted}; font-size: .8rem; line-height: 1.6; }
+    .client-payment-modal .client-payment-amount { margin: .75rem 0; color: ${T.text}; }
+    .client-demo-card {
+      display: grid;
+      gap: 1.1rem;
+      margin: 1.25rem 0;
+      padding: 1.25rem;
+      border: 1px solid #444;
+      background: linear-gradient(135deg, #303030, #151515 70%);
+    }
+    .client-demo-card span, .client-demo-card small { color: ${T.muted}; font: 600 .6rem ${T.mono}; letter-spacing: .12em; }
+    .client-demo-card strong { font: 600 1rem ${T.mono}; letter-spacing: .08em; }
 
     /* FOOTER */
     .footer {

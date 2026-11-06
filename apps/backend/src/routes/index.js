@@ -5,6 +5,9 @@ import appointmentsRoutes from './appointments.routes.js';
 import brandsRoutes from './brands.routes.js';
 import servicesRoutes from './services.routes.js';
 import usersRoutes from './users.routes.js';
+import notificationsRoutes from './notifications.routes.js';
+import paymentsRoutes from './payments.routes.js';
+import galleryRoutes from './gallery.routes.js';
 
 const router = Router();
 router.use('/auth', authRoutes);
@@ -12,5 +15,8 @@ router.use('/appointments', appointmentsRoutes);
 router.use('/brands', brandsRoutes);
 router.use('/services', servicesRoutes);
 router.use('/users', usersRoutes);
+router.use('/notifications', notificationsRoutes);
+router.use('/payments', paymentsRoutes);
+router.use('/gallery', galleryRoutes);
 
 export default router;

@@ -2,6 +2,35 @@ export const navStyles = (T) => `
     .nav-login, .nav-logout { background: transparent; border: 0; color: ${T.muted}; padding: .6rem .25rem; font-family: ${T.mono}; font-size: .62rem; letter-spacing: .08em; cursor: pointer; white-space: nowrap; transition: color .2s; }
     .nav-login:hover, .nav-logout:hover { color: ${T.orange}; }
     .nav-user { color: ${T.muted}; font-family: ${T.mono}; font-size: .62rem; letter-spacing: .08em; white-space: nowrap; }
+    .nav-notifications {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      color: ${T.muted};
+      background: transparent;
+      border: 1px solid ${T.border};
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+    }
+    .nav-notifications:hover, .nav-notifications.active { color: ${T.orange}; border-color: ${T.orange}; }
+    .nav-notification-count {
+      position: absolute;
+      top: -6px;
+      right: -7px;
+      min-width: 17px;
+      height: 17px;
+      padding: 0 4px;
+      border-radius: 9px;
+      color: #111;
+      background: ${T.orange};
+      font: 700 .58rem ${T.mono};
+      line-height: 17px;
+      text-align: center;
+    }
     /* NAVBAR */
     .nav-root {
       position: sticky;

@@ -415,6 +415,157 @@ export const adminStyles = (T) => `
     resize: vertical;
   }
 
+  /* NOVEDADES */
+  .admin-novedad-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    max-width: 260px;
+  }
+  .admin-novedad-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+  .admin-novedad-more {
+    font-family: ${T.mono};
+    font-size: 0.66rem;
+    color: ${T.muted};
+  }
+  .admin-novedad-dot {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin-top: 0.28rem;
+    border-radius: 50%;
+    background: ${T.muted};
+  }
+  .admin-novedad-dot.open { background: ${T.orange}; }
+  .admin-novedad-dot.scheduled { background: #f5c542; }
+  .admin-novedad-dot.resolved { background: #3ecf8e; }
+  .admin-novedad-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .admin-check-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: ${T.mono};
+    font-size: 0.68rem;
+    color: ${T.muted};
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .admin-check-inline input {
+    accent-color: ${T.orange};
+  }
+  .admin-novedad-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px 130px auto;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .admin-novedad-row .admin-form-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .admin-novedad-readonly {
+    list-style: none;
+    margin: 0;
+    padding: 0.75rem;
+    background: ${T.bg0};
+    border: 1px solid ${T.border};
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+  }
+  .admin-novedad-readonly li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+  @media (max-width: 768px) {
+    .admin-novedad-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* CASCADA DE CADENAS */
+  .admin-chain-label {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+    padding: 0.12rem 0.4rem;
+    border: 1px solid rgba(255, 98, 0, 0.45);
+    color: ${T.orange};
+    font-family: ${T.mono};
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .admin-chain-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+    padding: 0.22rem 0.5rem;
+    background: transparent;
+    border: 1px solid ${T.border};
+    color: ${T.muted};
+    font-family: ${T.mono};
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .admin-chain-toggle:hover,
+  .admin-chain-toggle[aria-expanded="true"] {
+    color: ${T.orange};
+    border-color: rgba(255, 98, 0, 0.55);
+    background: rgba(255, 98, 0, 0.06);
+  }
+  .admin-table tr.admin-chain-root td:first-child {
+    box-shadow: inset 2px 0 0 rgba(255, 98, 0, 0.55);
+  }
+  .admin-table tr.admin-chain-row td {
+    background: ${T.bg0};
+  }
+  .admin-table tr.admin-chain-row:hover td {
+    background: rgba(255, 98, 0, 0.06);
+  }
+  .admin-table tr.admin-chain-row td:first-child {
+    position: relative;
+    padding-left: 2.1rem;
+    border-left: 2px solid rgba(255, 98, 0, 0.3);
+  }
+  .admin-table tr.admin-chain-row td:first-child::before {
+    content: "";
+    position: absolute;
+    left: 0.95rem;
+    top: 0;
+    bottom: 50%;
+    width: 1px;
+    background: rgba(255, 98, 0, 0.35);
+  }
+  .admin-table tr.admin-chain-row td:first-child::after {
+    content: "";
+    position: absolute;
+    left: 0.95rem;
+    top: 50%;
+    width: 0.8rem;
+    height: 1px;
+    background: rgba(255, 98, 0, 0.35);
+  }
+
   /* EMPTY STATE */
   .admin-empty-state {
     text-align: center;

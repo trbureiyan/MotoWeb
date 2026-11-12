@@ -7,7 +7,7 @@ import { T } from '../styles/tokens';
 
 const TARGET_BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI', 'APRILIA'];
 const FALLBACK_BRANDS = TARGET_BRANDS.map(name => ({ name, slug: name.toLowerCase(), logoUrl: '' }));
-const MOTIVOS = ['MANTENIMIENTO PREVENTIVO', 'TUNING ECU / MAPEO', 'FRENOS', 'DIAGNÓSTICO', 'PREPARACIÓN CIRCUITO'];
+const MOTIVOS = ['DIAGNÓSTICO', 'REVISIÓN', 'MANTENIMIENTO PREVENTIVO'];
 const CUSTOM_BRAND = 'CUSTOM';
 
 function BrandOption({ brand, selected, onClick }) {

@@ -30,6 +30,7 @@ const services = [
     { name: "TUNING ECU / MAPEO", description: "Calibración de inyección y encendido en dinamómetro.", estimatedHours: 4, priceRange_min: 400000, priceRange_max: 850000 },
     { name: "FRENOS", description: "Mantenimiento de calipers, líquido y pastillas de freno.", estimatedHours: 2, priceRange_min: 90000, priceRange_max: 220000 },
     { name: "DIAGNÓSTICO", description: "Escaneo electrónico y diagnóstico multimarca.", estimatedHours: 1, priceRange_min: 80000, priceRange_max: 140000 },
+    { name: "REVISIÓN", description: "Revisión general de seguridad, niveles y estado mecánico.", estimatedHours: 2, priceRange_min: 100000, priceRange_max: 200000 },
     { name: "PREPARACIÓN CIRCUITO", description: "Ajuste de suspensión, seguridad y mapas de competición.", estimatedHours: 5, priceRange_min: 350000, priceRange_max: 750000 },
     { name: "OTRO", description: "Servicio personalizado solicitado por el cliente.", estimatedHours: 1, priceRange_min: 0, priceRange_max: 0 }
 ].map(service => ({ ...service, isActive: true }))

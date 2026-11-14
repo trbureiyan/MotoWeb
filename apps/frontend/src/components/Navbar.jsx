@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { IconBell } from './Icons';
+import { IconBell, IconLogout } from './Icons';
 
-export function Navbar({ onBooking, isGallery, isNotifications, currentView, onBack, onLogin, onLogout, onAdmin, onNotifications, loggedInUser }) {
+export function Navbar({ onBooking, isGallery, isNotifications, currentView, onBack, onLogin, onLogout, onAdmin, onMechanic, onNotifications, loggedInUser }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -83,13 +83,25 @@ export function Navbar({ onBooking, isGallery, isNotifications, currentView, onB
           </button>
         )}
 
+        {loggedInUser?.role === 'mechanic' && (
+          <button className="btn-outline" type="button" onClick={onMechanic} style={{ borderColor: '#ff6200', color: '#ff6200', fontSize: '0.7rem', whiteSpace: 'nowrap', padding: '0.5rem 0.85rem' }}>
+            PANEL MECÁNICO
+          </button>
+        )}
+
         {!isGallery && (loggedInUser ? (
           <>
             <span className="nav-user" aria-label={`Usuario conectado: ${loggedInUser.name}`}>
               {loggedInUser.name}
             </span>
-            <button className="nav-logout" type="button" onClick={onLogout}>
-              CERRAR SESIÓN
+            <button
+              className="nav-icon-btn"
+              type="button"
+              onClick={onLogout}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              <IconLogout />
             </button>
           </>
         ) : (
@@ -129,6 +141,13 @@ export function Navbar({ onBooking, isGallery, isNotifications, currentView, onB
               <li>
                 <button type="button" onClick={() => { closeMobileMenu(); onAdmin && onAdmin(); }} style={{ background: 'none', border: 'none', color: '#ff6200', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'bold', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
                   Panel de Administrador
+                </button>
+              </li>
+            )}
+            {loggedInUser?.role === 'mechanic' && (
+              <li>
+                <button type="button" onClick={() => { closeMobileMenu(); onMechanic && onMechanic(); }} style={{ background: 'none', border: 'none', color: '#ff6200', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'bold', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
+                  Panel de Mecánico
                 </button>
               </li>
             )}

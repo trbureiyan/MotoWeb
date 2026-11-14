@@ -87,5 +87,22 @@ if (!existingAdmin) {
     console.log(`El administrador ya existe: ${adminEmail}`)
 }
 
+const mechanicEmail = process.env.SEED_MECHANIC_EMAIL || "mecanico@mototaller.com"
+const mechanicPassword = process.env.SEED_MECHANIC_PASSWORD || "Mecanico12345!"
+const existingMechanic = await User.findOne({ email: mechanicEmail.toLowerCase() })
+if (!existingMechanic) {
+    await User.create({
+        name: process.env.SEED_MECHANIC_NAME || "Mecánico Moto.Taller",
+        email: mechanicEmail,
+        phone: process.env.SEED_MECHANIC_PHONE || "3000000001",
+        passwordHash: await bcrypt.hash(mechanicPassword, 10),
+        role: "mechanic",
+        isActive: true
+    })
+    console.log(`Mecánico creado: ${mechanicEmail}`)
+} else {
+    console.log(`El mecánico ya existe: ${mechanicEmail}`)
+}
+
 console.log(`Seed completado: ${brands.length} marcas, ${services.length} servicios y ${galleryImages.length} imágenes de galería disponibles.`)
 await mongoose.connection.close()

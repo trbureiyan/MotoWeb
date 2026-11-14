@@ -1031,6 +1031,32 @@ export const contentStyles = (T) => `
     }
     .client-notifications-header h1 em { color: ${T.orange}; font-style: normal; }
     .client-notifications-header p { color: ${T.muted}; font-size: .9rem; }
+    .client-notifications-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .client-refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      padding: .6rem .9rem;
+      color: ${T.muted};
+      background: transparent;
+      border: 1px solid ${T.border};
+      font: 600 .65rem ${T.mono};
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+      white-space: nowrap;
+    }
+    .client-refresh-btn:hover { color: ${T.orange}; border-color: ${T.orange}; }
+    .client-refresh-btn:disabled { opacity: .5; cursor: wait; }
+    .client-refresh-btn.spinning svg { animation: client-spin .7s linear infinite; }
+    @keyframes client-spin { to { transform: rotate(360deg); } }
     .client-notifications-tabs {
       display: flex;
       gap: .5rem;

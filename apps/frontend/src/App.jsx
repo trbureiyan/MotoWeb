@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -17,6 +17,7 @@ import { Styles } from './styles/Styles';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { AdminPanel } from './components/AdminPanel';
+import { MechanicPanel } from './components/MechanicPanel';
 import { BrandsCarousel } from './components/BrandsCarousel';
 import { NotificationsPage } from './components/NotificationsPage';
 
@@ -43,8 +44,10 @@ export function App() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    fetch('/api/gallery')
+  const loadGallery = useCallback(() => {
+    setGalleryLoading(true);
+    setGalleryError('');
+    return fetch('/api/gallery')
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.message || 'No se pudo cargar la galería.');
@@ -58,6 +61,10 @@ export function App() {
       .catch(error => setGalleryError(error.message))
       .finally(() => setGalleryLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadGallery();
+  }, [loadGallery]);
 
   const addGalleryImage = async ({ imageUrl, caption }) => {
     const response = await fetch('/api/gallery', {
@@ -143,6 +150,12 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const showMechanicPanel = () => {
+    if (loggedInUser && loggedInUser.role !== 'mechanic') return;
+    setActiveView('mechanic');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const showNotifications = () => {
     if (loggedInUser?.role !== 'client') return;
     setActiveView('notifications');
@@ -153,6 +166,8 @@ export function App() {
     setLoggedInUser(user);
     if (user.role === 'admin') {
       showAdminPanel();
+    } else if (user.role === 'mechanic') {
+      showMechanicPanel();
     } else {
       showHome();
     }
@@ -196,6 +211,12 @@ export function App() {
           galleryLoading={galleryLoading}
           galleryError={galleryError}
           onAddGalleryImage={addGalleryImage}
+          onRefreshGallery={loadGallery}
+        />
+      ) : activeView === 'mechanic' && loggedInUser?.role === 'mechanic' ? (
+        <MechanicPanel
+          onBack={showHome}
+          loggedInUser={loggedInUser}
         />
       ) : <>
       <Navbar 
@@ -207,6 +228,7 @@ export function App() {
         onLogin={showLogin}
         onLogout={handleLogout}
         onAdmin={showAdminPanel}
+        onMechanic={showMechanicPanel}
         onNotifications={showNotifications}
         loggedInUser={loggedInUser}
       />

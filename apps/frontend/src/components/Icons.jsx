@@ -15,11 +15,13 @@ import {
   CheckIcon,
   ShieldCheckIcon,
   ArrowPathIcon,
+  ArrowRightOnRectangleIcon,
   BellIcon,
+  PhotoIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 
-export const IconWrench = () => <WrenchScrewdriverIcon width="28" height="28" />;
+export const IconWrench = ({ size = 28 }) => <WrenchScrewdriverIcon width={size} height={size} />;
 export const IconGauge = () => <CogIcon width="28" height="28" />;
 export const IconDisc = () => <MapIcon width="28" height="28" />;
 export const IconMapPin = () => <MapPinIcon width="20" height="20" />;
@@ -40,3 +42,5 @@ export const IconShield = ({ size = 14 }) => <ShieldCheckIcon width={size} heigh
 export const IconRefresh = ({ size = 14 }) => <ArrowPathIcon width={size} height={size} />;
 export const IconBell = ({ size = 20 }) => <BellIcon width={size} height={size} />;
 export const IconCurrencyDollar = ({ size = 18 }) => <CurrencyDollarIcon width={size} height={size} />;
+export const IconGallery = ({ size = 18 }) => <PhotoIcon width={size} height={size} />;
+export const IconLogout = ({ size = 20 }) => <ArrowRightOnRectangleIcon width={size} height={size} />;

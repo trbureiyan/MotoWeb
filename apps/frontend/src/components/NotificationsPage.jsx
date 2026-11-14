@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { IconRefresh } from './Icons';
 
 const STATUS_LABELS = {
   pending: 'PENDIENTE',
@@ -51,51 +52,42 @@ export function NotificationsPage() {
   const [chainSubmitting, setChainSubmitting] = useState(false);
   const [chainError, setChainError] = useState('');
 
-  useEffect(() => {
-    let active = true;
-    const refreshData = () => {
-      setLoading(true);
-      setError('');
-
-      Promise.all([
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [appointmentResponse, notificationResponse] = await Promise.all([
         fetch('/api/appointments/mine', { credentials: 'include' }),
         fetch('/api/notifications', { credentials: 'include' })
-      ])
-        .then(async ([appointmentResponse, notificationResponse]) => {
-          const [appointmentData, notificationData] = await Promise.all([
-            appointmentResponse.json(),
-            notificationResponse.json()
-          ]);
-          if (!appointmentResponse.ok) {
-            throw new Error(appointmentData.message || 'No fue posible cargar tus citas.');
-          }
-          if (!notificationResponse.ok) {
-            throw new Error(notificationData.message || 'No fue posible cargar tus notificaciones.');
-          }
-          if (!Array.isArray(appointmentData) || !Array.isArray(notificationData)) {
-            throw new Error('El servidor devolvió información inválida.');
-          }
-          if (active) {
-            setAppointments(appointmentData);
-            setNotifications(notificationData);
-            window.dispatchEvent(new Event('notifications:updated'));
-          }
-        })
-        .catch(requestError => {
-          if (active) setError(requestError.message || 'No se pudo conectar con el servidor.');
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    };
-
-    refreshData();
-    window.addEventListener('appointments:updated', refreshData);
-    return () => {
-      active = false;
-      window.removeEventListener('appointments:updated', refreshData);
-    };
+      ]);
+      const [appointmentData, notificationData] = await Promise.all([
+        appointmentResponse.json(),
+        notificationResponse.json()
+      ]);
+      if (!appointmentResponse.ok) {
+        throw new Error(appointmentData.message || 'No fue posible cargar tus citas.');
+      }
+      if (!notificationResponse.ok) {
+        throw new Error(notificationData.message || 'No fue posible cargar tus notificaciones.');
+      }
+      if (!Array.isArray(appointmentData) || !Array.isArray(notificationData)) {
+        throw new Error('El servidor devolvió información inválida.');
+      }
+      setAppointments(appointmentData);
+      setNotifications(notificationData);
+      window.dispatchEvent(new Event('notifications:updated'));
+    } catch (requestError) {
+      setError(requestError.message || 'No se pudo conectar con el servidor.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+    window.addEventListener('appointments:updated', loadData);
+    return () => window.removeEventListener('appointments:updated', loadData);
+  }, [loadData]);
 
   const markAsRead = async (notification) => {
     setError('');
@@ -350,9 +342,24 @@ export function NotificationsPage() {
   return (
     <main className="client-notifications-page">
       <header className="client-notifications-header">
-        <span className="client-page-kicker">ÁREA DE CLIENTES</span>
-        <h1>MIS CITAS <em>&amp; NOTIFICACIONES</em></h1>
-        <p>Consulta el estado de tus citas y las novedades de tu servicio.</p>
+        <div className="client-notifications-header-top">
+          <div>
+            <span className="client-page-kicker">ÁREA DE CLIENTES</span>
+            <h1>MIS CITAS <em>&amp; NOTIFICACIONES</em></h1>
+            <p>Consulta el estado de tus citas y las novedades de tu servicio.</p>
+          </div>
+          <button
+            type="button"
+            className={`client-refresh-btn${loading ? ' spinning' : ''}`}
+            onClick={loadData}
+            disabled={loading}
+            aria-label="Actualizar contenido"
+            title="Actualizar contenido"
+          >
+            <IconRefresh size={16} />
+            ACTUALIZAR
+          </button>
+        </div>
       </header>
 
       <div className="client-notifications-tabs" role="tablist" aria-label="Citas y notificaciones">

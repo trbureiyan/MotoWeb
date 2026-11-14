@@ -68,6 +68,9 @@ const serializeAppointment = (appointment, payment = null) => ({
         createdAt: novedad.createdAt
     })),
     resolvesNovedades: (appointment.resolvesNovedades || []).map(id => String(id)),
+    completedBy: appointment.completedBy || null,
+    completedByName: appointment.completedByName || "",
+    completedAt: appointment.completedAt || null,
     payment: payment ? {
         amount: payment.amount,
         status: payment.status,
@@ -278,6 +281,10 @@ export const updateAppointment = async (req, res) => {
         return res.status(400).json({ message: "El formato de novedades no es válido." })
     }
     if (!Object.keys(allowed).length) return res.status(400).json({ message: "No hay cambios para aplicar" })
+    // Los mecánicos conservan confirmar y completar, pero no pueden cancelar citas.
+    if (req.user?.role === "mechanic" && allowed.status === "cancelled") {
+        return res.status(403).json({ message: "Los mecánicos no pueden cancelar citas." })
+    }
 
     try {
         const appointmentDocument = await Appointment.findById(req.params.id)
@@ -324,6 +331,12 @@ export const updateAppointment = async (req, res) => {
         delete allowed.paymentAmount
         Object.assign(appointmentDocument, allowed)
         if (hasNovedadesInput) appointmentDocument.novedades = novedadesInput
+        // Registra quién completa la cita (admin o mecánico) para dejar rastro del trabajo.
+        if (allowed.status === "completed" && previousStatus !== "completed") {
+            appointmentDocument.completedBy = req.user?.id || null
+            appointmentDocument.completedByName = req.user?.name || ""
+            appointmentDocument.completedAt = new Date()
+        }
         await appointmentDocument.save()
 
         if (shouldCreatePayment) {

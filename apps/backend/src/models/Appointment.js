@@ -123,6 +123,21 @@ const appointmentSchema = new mongoose.Schema(
         resolvesNovedades: {
             type: [{ type: mongoose.Schema.Types.ObjectId }],
             default: []
+        },
+        // Registro de quién completó la cita (admin o mecánico) al registrar novedades.
+        completedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        },
+        completedByName: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+        completedAt: {
+            type: Date,
+            default: null
         }
     },
     {

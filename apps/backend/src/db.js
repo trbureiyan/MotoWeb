@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { MONGO_URI } from "./config.js";
 import "./models/Appointment.js";
 import "./models/Brand.js";
+import "./models/BrandRequest.js";
 import "./models/GalleryImage.js";
 import "./models/Notification.js";
 import "./models/PageView.js";

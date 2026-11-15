@@ -838,6 +838,169 @@ export const adminStyles = (T) => `
   .admin-role-tag.active { color: #4ade80; }
   .admin-role-tag.pending { color: ${T.orange}; }
 
+  /* --- ANALÍTICA (page_views) --- */
+  .analytics-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .analytics-range {
+    display: inline-flex;
+    border: 1px solid ${T.border};
+  }
+  .analytics-range-btn {
+    background: transparent;
+    border: none;
+    border-right: 1px solid ${T.border};
+    color: ${T.muted};
+    font-family: ${T.mono};
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+  }
+  .analytics-range-btn:last-child { border-right: none; }
+  .analytics-range-btn:hover { color: ${T.text}; }
+  .analytics-range-btn.active { color: #000; background: ${T.orange}; font-weight: 700; }
+  .analytics-rollup-msg {
+    margin: 0 0 1rem;
+    font-family: ${T.mono};
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: ${T.orange};
+  }
+  .analytics-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .analytics-kpi-card {
+    background: ${T.bg1};
+    border: 1px solid ${T.border};
+    border-left: 3px solid ${T.orange};
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .analytics-kpi-value {
+    font-family: ${T.head};
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+  .analytics-kpi-label {
+    font-family: ${T.mono};
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    color: ${T.muted};
+    text-transform: uppercase;
+  }
+  .analytics-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .analytics-panel {
+    background: ${T.bg1};
+    border: 1px solid ${T.border};
+    padding: 1.25rem;
+  }
+  .analytics-panel-title {
+    margin: 0 0 1rem;
+    font-family: ${T.mono};
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: ${T.orange};
+    text-transform: uppercase;
+  }
+  .analytics-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .analytics-bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 56px;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .analytics-bar-label {
+    font-family: ${T.mono};
+    font-size: 0.68rem;
+    color: ${T.text};
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .analytics-bar-track {
+    display: block;
+    height: 10px;
+    background: ${T.bg3};
+    overflow: hidden;
+  }
+  .analytics-bar-fill {
+    display: block;
+    height: 100%;
+    background: ${T.orange};
+    transition: width 0.4s ease;
+  }
+  .analytics-bar-value {
+    font-family: ${T.mono};
+    font-size: 0.68rem;
+    color: ${T.muted};
+    text-align: right;
+  }
+  .analytics-time-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 180px;
+    padding-top: 0.5rem;
+    overflow-x: auto;
+  }
+  .analytics-time-col {
+    flex: 1 1 0;
+    min-width: 14px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
+  .analytics-time-bar {
+    width: 100%;
+    max-width: 22px;
+    background: ${T.orange};
+    opacity: 0.85;
+    transition: height 0.4s ease;
+  }
+  .analytics-time-col:hover .analytics-time-bar { opacity: 1; }
+  .analytics-time-date {
+    font-family: ${T.mono};
+    font-size: 0.5rem;
+    color: ${T.muted};
+    white-space: nowrap;
+  }
+  .analytics-empty {
+    margin: 0;
+    font-family: ${T.mono};
+    font-size: 0.7rem;
+    color: ${T.muted};
+  }
+
+  @media (max-width: 720px) {
+    .analytics-panels { grid-template-columns: 1fr; }
+    .analytics-bar-row { grid-template-columns: 90px 1fr 48px; }
+  }
+
   @media (max-width: 1024px) {
     .apt-main-row {
       grid-template-columns: 1fr 1fr;

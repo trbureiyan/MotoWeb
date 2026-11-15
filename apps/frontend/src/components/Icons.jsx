@@ -18,6 +18,8 @@ import {
   ArrowRightOnRectangleIcon,
   BellIcon,
   PhotoIcon,
+  ChartBarIcon,
+  EyeIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 
@@ -44,3 +46,5 @@ export const IconBell = ({ size = 20 }) => <BellIcon width={size} height={size} 
 export const IconCurrencyDollar = ({ size = 18 }) => <CurrencyDollarIcon width={size} height={size} />;
 export const IconGallery = ({ size = 18 }) => <PhotoIcon width={size} height={size} />;
 export const IconLogout = ({ size = 20 }) => <ArrowRightOnRectangleIcon width={size} height={size} />;
+export const IconChart = ({ size = 18 }) => <ChartBarIcon width={size} height={size} />;
+export const IconEye = ({ size = 18 }) => <EyeIcon width={size} height={size} />;

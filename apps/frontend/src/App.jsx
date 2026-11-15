@@ -20,6 +20,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { MechanicPanel } from './components/MechanicPanel';
 import { BrandsCarousel } from './components/BrandsCarousel';
 import { NotificationsPage } from './components/NotificationsPage';
+import { trackView } from './utils/analytics';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -43,6 +44,10 @@ export function App() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    trackView(activeView, 'view');
+  }, [activeView]);
 
   const loadGallery = useCallback(() => {
     setGalleryLoading(true);
@@ -162,8 +167,14 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const openBooking = () => {
+    trackView('booking', 'open');
+    setShowModal(true);
+  };
+
   const handleLogin = (user) => {
     setLoggedInUser(user);
+    trackView('auth', 'login');
     if (user.role === 'admin') {
       showAdminPanel();
     } else if (user.role === 'mechanic') {
@@ -220,7 +231,7 @@ export function App() {
         />
       ) : <>
       <Navbar 
-        onBooking={() => setShowModal(true)} 
+        onBooking={openBooking} 
         isGallery={activeView === 'gallery'} 
         isNotifications={activeView === 'notifications'}
         currentView={activeView}
@@ -245,7 +256,7 @@ export function App() {
         />
       ) : (
         <>
-          <Hero onBooking={() => setShowModal(true)} />
+          <Hero onBooking={openBooking} />
           <BrandsCarousel />
           <Servicios />
           <Testimonials />

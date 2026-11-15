@@ -42,6 +42,16 @@ const workshopStatSchema = new mongoose.Schema(
             default: 0,
             min: 0,
             max: 5
+        },
+        // Métricas de navegación consolidadas del período (tabla page_views).
+        totalPageViews: {
+            type: Number,
+            default: 0
+        },
+        topSection: {
+            type: String,
+            trim: true,
+            default: ""
         }
     },
     {

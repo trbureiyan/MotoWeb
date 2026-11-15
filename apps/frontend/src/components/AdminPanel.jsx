@@ -10,11 +10,13 @@ import {
   IconShield,
   IconCurrencyDollar,
   IconGallery,
+  IconChart,
   IconRefresh
 } from './Icons';
 import { T } from '../styles/tokens';
 import { GalleryImageModal } from './Gallery';
 import { AppointmentsBoard } from './AppointmentsBoard';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
 
 const apiRequest = async (path, options = {}) => {
   const response = await fetch(path, {
@@ -326,6 +328,16 @@ export function AdminPanel({
           <IconGallery size={20} />
           <span className="admin-tab-badge">{galleryImages.length}</span>
         </button>
+
+        <button
+          type="button"
+          className={`admin-tab-btn${activeTab === 'analitica' ? ' active' : ''}`}
+          onClick={() => { setActiveTab('analitica'); setSearchTerm(''); }}
+          aria-label="Analítica"
+          title="Analítica"
+        >
+          <IconChart size={20} />
+        </button>
       </nav>
 
       {/* CONTENIDO PRINCIPAL */}
@@ -612,6 +624,11 @@ export function AdminPanel({
               </div>
             )}
           </section>
+        )}
+
+        {/* TAB 7: ANALÍTICA */}
+        {activeTab === 'analitica' && (
+          <AnalyticsDashboard reloadSignal={refreshKey} />
         )}
       </main>
 

@@ -268,7 +268,7 @@ export function App() {
             loading={galleryLoading}
             error={galleryError}
           />
-          <Contact />
+          <Contact onBooking={openBooking} />
           <Footer />
         </>
       )}

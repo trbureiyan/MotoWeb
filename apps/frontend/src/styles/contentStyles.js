@@ -670,6 +670,35 @@ export const contentStyles = (T) => `
       transition: background 0.2s;
     }
     .terminal-send:hover { background: #ff8a00; }
+    .terminal-send:disabled { opacity: 0.55; cursor: not-allowed; }
+    .terminal-booking-action {
+      border-top: 1px solid ${T.border};
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      color: ${T.muted};
+      font-size: 0.75rem;
+    }
+    .terminal-booking-btn {
+      border: 1px solid ${T.orange};
+      border-radius: 7px;
+      padding: 0.55rem 0.75rem;
+      background: transparent;
+      color: ${T.orange};
+      font: 600 0.68rem ${T.head};
+      letter-spacing: 0.04em;
+      cursor: pointer;
+    }
+    .terminal-booking-btn:hover { background: ${T.orange}; color: #000; }
+    .terminal-privacy-note {
+      margin: 0;
+      padding: 0.55rem 1.25rem 0.75rem;
+      color: ${T.muted};
+      font-size: 0.68rem;
+      line-height: 1.5;
+    }
     .terminal-options {
       display: flex;
       gap: 0.5rem;

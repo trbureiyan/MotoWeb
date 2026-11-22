@@ -63,6 +63,7 @@ export function AdminPanel({
   const [brandRequests, setBrandRequests] = useState([]);
   const [users, setUsers] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [contactRequests, setContactRequests] = useState([]);
   const [pendingAppointments, setPendingAppointments] = useState(0);
   const [apiError, setApiError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -79,19 +80,33 @@ export function AdminPanel({
 
   const loadAdminData = async () => {
     try {
-      const [serviceData, brandData, brandRequestData, userData, paymentData] = await Promise.all([
+      const [serviceData, brandData, brandRequestData, userData, paymentData, contactRequestData] = await Promise.all([
         apiRequest('/api/services?active=false'),
         apiRequest('/api/brands?active=false'),
         apiRequest('/api/brands/requests'),
         apiRequest('/api/users'),
-        apiRequest('/api/payments')
+        apiRequest('/api/payments'),
+        apiRequest('/api/chat/requests')
       ]);
       setServices(serviceData || []);
       setBrands(brandData || []);
       setBrandRequests(brandRequestData || []);
       setUsers(userData || []);
       setPayments(paymentData || []);
+      setContactRequests(contactRequestData || []);
       setApiError('');
+    } catch (error) {
+      setApiError(error.message);
+    }
+  };
+
+  const updateContactRequestStatus = async (request, status) => {
+    try {
+      const updated = await apiRequest(`/api/chat/requests/${request.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+      setContactRequests(current => current.map(item => item.id === request.id ? updated : item));
     } catch (error) {
       setApiError(error.message);
     }
@@ -265,6 +280,17 @@ export function AdminPanel({
       <nav className="admin-tabs-nav" aria-label="Navegación del panel de administración">
         <button
           type="button"
+          className={`admin-tab-btn${activeTab === 'solicitudes' ? ' active' : ''}`}
+          onClick={() => { setActiveTab('solicitudes'); setSearchTerm(''); }}
+          aria-label="Solicitudes del chat"
+          title="Solicitudes del chat"
+        >
+          <IconRefresh size={20} />
+          {contactRequests.filter(request => request.status === 'pending').length > 0 && <span className="admin-tab-badge">{contactRequests.filter(request => request.status === 'pending').length}</span>}
+        </button>
+
+        <button
+          type="button"
           className={`admin-tab-btn${activeTab === 'citas' ? ' active' : ''}`}
           onClick={() => { setActiveTab('citas'); setSearchTerm(''); }}
           aria-label="Citas del taller"
@@ -346,6 +372,41 @@ export function AdminPanel({
         {/* TAB 1: CITAS DE TALLER (componente compartido con el panel del mecánico) */}
         {activeTab === 'citas' && (
           <AppointmentsBoard canCancel onPendingCountChange={setPendingAppointments} reloadSignal={refreshKey} />
+        )}
+
+        {activeTab === 'solicitudes' && (
+          <section>
+            <div className="admin-header-row">
+              <div>
+                <h1 className="admin-view-title">SOLICITUDES DEL CHAT</h1>
+                <p className="admin-view-sub">Personas que pidieron al taller que las contacte. Estas solicitudes no son citas.</p>
+              </div>
+              <button className="btn-outline" onClick={handleRefresh} disabled={refreshing}>ACTUALIZAR</button>
+            </div>
+            <div className="admin-card-list">
+              {contactRequests.map(request => (
+                <article className="admin-record-card" key={request.id}>
+                  <div className="admin-record-head">
+                    <h3 className="admin-record-title">{request.name}</h3>
+                    <span className={`badge-status ${request.status === 'pending' ? 'inactive' : 'active'}`}>{request.status === 'pending' ? 'PENDIENTE' : request.status === 'contacted' ? 'CONTACTADO' : 'CERRADO'}</span>
+                  </div>
+                  <p className="admin-record-desc">{request.details}</p>
+                  <div className="admin-record-meta">
+                    <span>CONTACTO <strong>{request.contact}</strong></span>
+                    <span>SERVICIO <strong>{request.service}</strong></span>
+                    {request.motorcycle && <span>MOTO <strong>{request.motorcycle}</strong></span>}
+                    <span>RECIBIDA <strong>{new Date(request.createdAt).toLocaleString('es-CO')}</strong></span>
+                  </div>
+                  <div className="admin-record-actions">
+                    {request.status !== 'contacted' && <button className="btn-action-icon" onClick={() => updateContactRequestStatus(request, 'contacted')}>MARCAR CONTACTADO</button>}
+                    {request.status !== 'closed' && <button className="btn-action-icon" onClick={() => updateContactRequestStatus(request, 'closed')}>CERRAR</button>}
+                    {request.status !== 'pending' && <button className="btn-action-icon" onClick={() => updateContactRequestStatus(request, 'pending')}>REABRIR</button>}
+                  </div>
+                </article>
+              ))}
+              {!contactRequests.length && <p className="admin-empty-state">AÚN NO HAY SOLICITUDES DEL CHAT.</p>}
+            </div>
+          </section>
         )}
 
         {/* TAB 2: SERVICIOS */}

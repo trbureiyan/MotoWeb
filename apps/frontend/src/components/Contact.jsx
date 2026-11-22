@@ -2,104 +2,43 @@ import { useEffect, useRef, useState } from 'react';
 import { IconRadar } from './Icons';
 import { T } from '../styles/tokens';
 
-const CHAT_STEPS = [
-  {
-    key: 'name',
-    prompt: 'Bienvenido a MOTO.TALLER. Para agendar tu cita, ¿como te llamas?',
-    placeholder: 'Tu nombre...',
-    options: null,
-  },
-  {
-    key: 'service',
-    prompt: 'Perfecto. ¿Que servicio necesitas hoy?',
-    placeholder: 'O escribe tu servicio...',
-    options: ['MANTENIMIENTO', 'TUNING ECU', 'SISTEMA DE FRENOS', 'DIAGNÓSTICO'],
-  },
-  {
-    key: 'issue',
-    prompt: 'Cuéntanos brevemente lo que necesitas revisar en tu moto:',
-    placeholder: 'Detalla el síntoma o trabajo...',
-    options: null,
-  },
-  {
-    key: 'contact',
-    prompt: 'Ya casi terminamos. ¿Cual es tu numero o email para confirmar?',
-    placeholder: 'Teléfono o email...',
-    options: null,
-  },
-];
-
-function TerminalChat() {
-  const [step, setStep] = useState(0);
+function TerminalChat({ onBooking }) {
   const [messages, setMessages] = useState([
-    { type: 'system', text: 'MOTO.TALLER - Chat de servicio en linea' },
-    { type: 'system', text: CHAT_STEPS[0].prompt },
+    { type: 'system', text: 'Hola, soy el asistente de MotoTaller. Puedo orientarte sobre nuestros servicios o ayudarte a dejar una solicitud para que el equipo te contacte.' },
   ]);
   const [inputVal, setInputVal] = useState('');
-  const [completed, setCompleted] = useState(false);
-  const [userData, setUserData] = useState({});
+  const [sending, setSending] = useState(false);
   const msgRef = useRef(null);
 
   useEffect(() => {
     if (msgRef.current) msgRef.current.scrollTop = msgRef.current.scrollHeight;
   }, [messages]);
 
-  const send = (val) => {
-    const value = val || inputVal.trim();
-    if (!value) return;
-    const currentStep = CHAT_STEPS[step];
-    const newUserData = { ...userData, [currentStep.key]: value };
-    setUserData(newUserData);
-
-    const newMessages = [
-      ...messages,
-      { type: 'user', text: value },
-    ];
-
-    if (step < CHAT_STEPS.length - 1) {
-      const nextStep = step + 1;
-      newMessages.push({ type: 'data', text: `${currentStep.key.toUpperCase()} registrado: "${value}"` });
-      newMessages.push({ type: 'system', text: CHAT_STEPS[nextStep].prompt });
-      setStep(nextStep);
-      setMessages(newMessages);
-      setInputVal('');
-    } else {
-      newMessages.push({ type: 'system', text: 'Enviando tu solicitud...' });
-      setMessages(newMessages);
-      setInputVal('');
-
-      fetch('https://jsonplaceholder.typicode.com/posts', {
+  const send = async () => {
+    const value = inputVal.trim();
+    if (!value || sending) return;
+    const history = messages
+      .filter(item => item.role && ['user', 'assistant'].includes(item.role))
+      .map(item => ({ role: item.role, content: item.text }))
+      .slice(-12);
+    setMessages(prev => [...prev, { type: 'user', role: 'user', text: value }]);
+    setInputVal('');
+    setSending(true);
+    try {
+      const response = await fetch('/api/chat/message', {
         method: 'POST',
-        body: JSON.stringify({
-          marca: newUserData.name,
-          motivo: newUserData.service,
-          contacto: newUserData.contact,
-          issue: newUserData.issue
-        }),
-        headers: { 'Content-type': 'application/json; charset=UTF-8' },
-      })
-      .then(res => {
-        if (res.status === 201) {
-          if (window.UIkit) {
-            window.UIkit.notification({message: 'Solicitud recibida. Ticket #1024', status: 'success'});
-          }
-          setMessages([
-            { type: 'system', text: 'MOTO.TALLER - Chat de servicio en linea' },
-            { type: 'system', text: CHAT_STEPS[0].prompt }
-          ]);
-          setStep(0);
-          setUserData({});
-        } else {
-          setMessages(prev => [...prev, { type: 'data', text: 'Error en transmisión.' }]);
-        }
-      })
-      .catch(() => {
-        setMessages(prev => [...prev, { type: 'data', text: 'Fallo de conexión.' }]);
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: value, history })
       });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'No fue posible conectar con el asistente.');
+      setMessages(prev => [...prev, { type: 'system', role: 'assistant', text: result.reply }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { type: 'system', role: 'assistant', text: error.message || 'No fue posible conectar con el asistente. Intenta de nuevo.' }]);
+    } finally {
+      setSending(false);
     }
   };
-
-  const progress = ((step + (completed ? 1 : 0)) / CHAT_STEPS.length) * 100;
 
   return (
     <div className="terminal-wrap">
@@ -107,36 +46,32 @@ function TerminalChat() {
         <div className="terminal-dot" style={{ background: '#ff5f57' }} />
         <div className="terminal-dot" style={{ background: '#febc2e' }} />
         <div className="terminal-dot" style={{ background: '#28c840' }} />
-        <div className="terminal-title">MOTO.TALLER - Atencion en linea</div>
+        <div className="terminal-title">MOTO.TALLER - Asistente virtual</div>
       </div>
-      <div className="terminal-progress-bar">
-        <div className="terminal-progress-fill" style={{ width: `${progress}%` }} />
-      </div>
-      <div className="terminal-messages" ref={msgRef}>
+      <div className="terminal-messages" ref={msgRef} aria-live="polite" aria-label="Conversación con el asistente">
         {messages.map((m, i) => (
           <div key={i} className={`msg-${m.type}`}>{m.text}</div>
         ))}
-        {!completed && <div className="cursor-blink" />}
+        {sending && <div className="msg-system" role="status">Escribiendo...</div>}
       </div>
-      {!completed && CHAT_STEPS[step].options && (
-        <div className="terminal-options">
-          {CHAT_STEPS[step].options.map(opt => (
-            <button key={opt} className="terminal-option" onClick={() => send(opt)}>{opt}</button>
-          ))}
-        </div>
-      )}
-      {!completed && (
-        <div className="terminal-input-row">
+      <div className="terminal-input-row">
           <input
             className="terminal-input"
             value={inputVal}
             onChange={e => setInputVal(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && send()}
-            placeholder={CHAT_STEPS[step].placeholder}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
+            placeholder="Escribe tu pregunta..."
+            aria-label="Mensaje para el asistente"
+            maxLength={1200}
+            disabled={sending}
           />
-          <button className="terminal-send" onClick={() => send()}>ENVIAR</button>
-        </div>
-      )}
+          <button className="terminal-send" onClick={send} disabled={sending || !inputVal.trim()}>ENVIAR</button>
+      </div>
+      <div className="terminal-booking-action">
+        <span>¿Ya sabes qué servicio necesitas?</span>
+        <button type="button" className="terminal-booking-btn" onClick={onBooking}>AGENDAR CITA</button>
+      </div>
+      <p className="terminal-privacy-note">Tus mensajes se procesan con un proveedor de IA. Los datos de contacto solo se guardan si confirmas el envío de una solicitud.</p>
     </div>
   );
 }
@@ -215,7 +150,7 @@ function WorkshopInfo() {
   );
 }
 
-export function Contact() {
+export function Contact({ onBooking }) {
   return (
     <section className="section contact-section" id="contacto">
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -225,7 +160,7 @@ export function Contact() {
         <p className="section-sub reveal">Ponte en contacto con nuestro equipo de ingenieros para programar tu servicio o consultar sobre preparaciones específicas de alto rendimiento.</p>
         <div className="contact-grid">
           <div className="reveal">
-            <TerminalChat />
+            <TerminalChat onBooking={onBooking} />
           </div>
           <div className="reveal">
             <WorkshopInfo />

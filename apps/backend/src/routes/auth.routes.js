@@ -6,6 +6,7 @@ import { authRequired } from '../middlewares/validate.token.js';
 import {validateSchema} from '../middlewares/validate.middleware.js';
 
 import { registerSchema, loginSchema } from '../schema/auth.schema.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router()
 
 router.post('/register', validateSchema(registerSchema), register)
@@ -14,7 +15,7 @@ router.post('/login', validateSchema(loginSchema), login)
 
 router.post('/logout', logout)
 
-router.get('/profile', authRequired, profile)
+router.get('/profile', authRequired, asyncHandler(profile))
 
 
 export default router

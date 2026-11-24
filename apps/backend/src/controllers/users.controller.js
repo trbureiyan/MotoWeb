@@ -10,7 +10,12 @@ export const updateUser = async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: "ID de usuario inválido" })
     const allowed = {}
     if (req.body.role !== undefined) allowed.role = req.body.role
-    if (req.body.isActive !== undefined) allowed.isActive = Boolean(req.body.isActive)
+    if (req.body.isActive !== undefined) {
+        if (typeof req.body.isActive !== "boolean") {
+            return res.status(400).json({ message: "isActive debe ser booleano" })
+        }
+        allowed.isActive = req.body.isActive
+    }
     if (!Object.keys(allowed).length) return res.status(400).json({ message: "No hay cambios para aplicar" })
 
     try {

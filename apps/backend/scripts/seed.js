@@ -66,13 +66,17 @@ const upsertMany = async (Model, entries, key) => {
     })))
 }
 
+if (!process.env.SEED_ADMIN_PASSWORD || !process.env.SEED_MECHANIC_PASSWORD) {
+    throw new Error("SEED_ADMIN_PASSWORD y SEED_MECHANIC_PASSWORD son obligatorias para ejecutar el seed.")
+}
+
 await mongoose.connect(MONGO_URI)
 await upsertMany(Brand, brands, "slug")
 await upsertMany(Service, services, "name")
 await upsertMany(GalleryImage, galleryImages, "imageUrl")
 
 const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@mototaller.com"
-const adminPassword = process.env.SEED_ADMIN_PASSWORD || "Admin12345!"
+const adminPassword = process.env.SEED_ADMIN_PASSWORD
 const existingAdmin = await User.findOne({ email: adminEmail.toLowerCase() })
 if (!existingAdmin) {
     await User.create({
@@ -89,7 +93,7 @@ if (!existingAdmin) {
 }
 
 const mechanicEmail = process.env.SEED_MECHANIC_EMAIL || "mecanico@mototaller.com"
-const mechanicPassword = process.env.SEED_MECHANIC_PASSWORD || "Mecanico12345!"
+const mechanicPassword = process.env.SEED_MECHANIC_PASSWORD
 const existingMechanic = await User.findOne({ email: mechanicEmail.toLowerCase() })
 if (!existingMechanic) {
     await User.create({

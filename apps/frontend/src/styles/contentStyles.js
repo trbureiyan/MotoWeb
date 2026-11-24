@@ -1532,4 +1532,239 @@ export const contentStyles = (T) => `
     .testimonials-section { background: ${T.bg0}; }
     .gallery-section { background: ${T.bg2}; }
     .contact-section { background: ${T.bg1}; }
+
+    /* REVIEWS & TESTIMONIALS ENHANCEMENTS */
+    .testimonials-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .review-open-btn {
+      padding: 0.6rem 1.25rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      border-color: ${T.orange};
+      color: ${T.orange};
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .review-open-btn:hover {
+      background: ${T.orange};
+      color: #000;
+      border-color: ${T.orange};
+    }
+    .review-stars-row {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 0.85rem;
+      color: ${T.orange};
+    }
+    .star-filled {
+      color: ${T.orange};
+    }
+    .star-empty {
+      color: rgba(255, 255, 255, 0.2);
+    }
+    .review-admin-toolbar {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      z-index: 10;
+      background: rgba(18, 18, 18, 0.9);
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .review-hidden-badge {
+      font-family: ${T.mono};
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      background: rgba(255, 98, 0, 0.2);
+      color: ${T.orange};
+      border-radius: 3px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .review-admin-action-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      color: ${T.muted};
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      padding: 0;
+    }
+    .review-admin-action-btn:hover {
+      color: ${T.text};
+      border-color: ${T.muted};
+    }
+    .review-admin-action-btn.btn-delete:hover {
+      color: #ff5555;
+      border-color: #ff5555;
+      background: rgba(255, 85, 85, 0.1);
+    }
+    .review-admin-action-btn.btn-show:hover {
+      color: ${T.orange};
+      border-color: ${T.orange};
+    }
+    .review-card-hidden {
+      opacity: 0.65;
+      border: 1px dashed rgba(255, 98, 0, 0.4);
+    }
+    .review-card-hidden:hover {
+      opacity: 1;
+    }
+
+    /* REVIEW MODAL */
+    .review-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      box-sizing: border-box;
+      animation: fadeIn 0.2s ease;
+    }
+    .review-modal {
+      background: ${T.bg1};
+      border: 1px solid ${T.border};
+      border-top: 2px solid ${T.orange};
+      padding: 2.25rem 2rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+      position: relative;
+      box-sizing: border-box;
+    }
+    .review-modal h2 {
+      font-family: ${T.head};
+      font-size: 1.35rem;
+      letter-spacing: 0.1em;
+      color: ${T.text};
+      margin: 0 0 0.5rem 0;
+      text-transform: uppercase;
+    }
+    .review-modal-sub {
+      font-size: 0.85rem;
+      color: ${T.muted};
+      margin-bottom: 1.5rem;
+      line-height: 1.4;
+    }
+    .review-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1.25rem;
+      background: transparent;
+      border: 0;
+      color: ${T.muted};
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.25rem;
+    }
+    .review-modal-close:hover { color: ${T.orange}; }
+    .star-picker-wrap {
+      margin-bottom: 1.25rem;
+    }
+    .star-picker-label {
+      display: block;
+      font-family: ${T.mono};
+      font-size: 0.72rem;
+      color: ${T.muted};
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+    .star-picker-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .star-picker-btn {
+      background: transparent;
+      border: 0;
+      padding: 0.2rem;
+      cursor: pointer;
+      color: ${T.orange};
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s;
+    }
+    .star-picker-btn:hover {
+      transform: scale(1.2);
+    }
+    .star-picker-text {
+      font-family: ${T.mono};
+      font-size: 0.75rem;
+      color: ${T.orange};
+      margin-left: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+    .review-form-group {
+      margin-bottom: 1.25rem;
+    }
+    .review-form-group label {
+      display: block;
+      font-family: ${T.mono};
+      font-size: 0.72rem;
+      color: ${T.muted};
+      letter-spacing: 0.1em;
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+    }
+    .review-form-input, .review-form-textarea {
+      width: 100%;
+      background: ${T.bg0};
+      border: 1px solid ${T.border};
+      color: ${T.text};
+      padding: 0.75rem 1rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .review-form-input:focus, .review-form-textarea:focus {
+      outline: none;
+      border-color: ${T.orange};
+    }
+    .review-form-textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+    .review-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .review-modal-error {
+      background: rgba(255, 85, 85, 0.1);
+      border-left: 3px solid #ff5555;
+      padding: 0.6rem 0.8rem;
+      color: #ff7777;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+    }
   `;

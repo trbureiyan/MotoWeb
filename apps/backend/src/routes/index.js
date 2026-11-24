@@ -10,6 +10,7 @@ import notificationsRoutes from './notifications.routes.js';
 import paymentsRoutes from './payments.routes.js';
 import galleryRoutes from './gallery.routes.js';
 import chatRoutes from './chat.routes.js';
+import reviewsRoutes from './reviews.routes.js';
 
 const router = Router();
 router.use('/auth', authRoutes);
@@ -22,5 +23,6 @@ router.use('/notifications', notificationsRoutes);
 router.use('/payments', paymentsRoutes);
 router.use('/gallery', galleryRoutes);
 router.use('/chat', chatRoutes);
+router.use('/reviews', reviewsRoutes);
 
 export default router;

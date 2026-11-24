@@ -37,7 +37,11 @@ export const connectDB = async () => {
     try {
         await mongoose.connect(MONGO_URI);
         console.log("DB connected");
-        await initializeCollections();
+        // Inicialización de colecciones e índices en background —
+        // no bloquea el arranque del servidor.
+        initializeCollections()
+            .then(() => console.log("Colecciones e índices listos."))
+            .catch((err) => console.warn("Error inicializando colecciones (no crítico):", err.message));
     } catch (error) {
         console.error("DB connection error:", error.message);
         // Re-lanzamos el error para que el servidor pueda detenerse si falla la conexión

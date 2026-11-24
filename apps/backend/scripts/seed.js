@@ -17,6 +17,7 @@ const { default: User } = await import("../src/models/User.js")
 const { default: Brand } = await import("../src/models/Brand.js")
 const { default: Service } = await import("../src/models/Service.js")
 const { default: GalleryImage } = await import("../src/models/GalleryImage.js")
+const { default: Review } = await import("../src/models/Review.js")
 
 const brands = ["DUCATI", "BMW", "KTM", "YAMAHA", "TRIUMPH", "SUZUKI", "HONDA", "KAWASAKI", "APRILIA"].map(name => ({
     name,
@@ -102,6 +103,39 @@ if (!existingMechanic) {
     console.log(`Mecánico creado: ${mechanicEmail}`)
 } else {
     console.log(`El mecánico ya existe: ${mechanicEmail}`)
+}
+
+const seedReviews = [
+    {
+        authorName: "Carlos Restrepo",
+        motorcycle: "Kawasaki ZX-10R",
+        comment: "El mejor tuning que le han hecho a mi moto. La respuesta en bajas revoluciones es increíble y la entrega de potencia lineal me quitó 2 segundos en el circuito.",
+        rating: 5,
+        isApproved: true
+    },
+    {
+        authorName: "Alejandro Gómez",
+        motorcycle: "Yamaha R6",
+        comment: "Mantenimiento impecable. Salen de aquí sin que nada quede al aire. Confíen en el taller para moto de alta cilindrada.",
+        rating: 5,
+        isApproved: true
+    },
+    {
+        authorName: "Juan David Pérez",
+        motorcycle: "BMW S1000RR",
+        comment: "No le dejo mi moto a nadie más. El dyno muestra exactamente lo que le hacen a tu moto, pura transparencia y resultados reales en cada marcha.",
+        rating: 5,
+        isApproved: true
+    }
+];
+
+const adminUser = existingAdmin || await User.findOne({ email: adminEmail.toLowerCase() });
+if (adminUser) {
+    const existingReviewsCount = await Review.countDocuments();
+    if (existingReviewsCount === 0) {
+        await Review.insertMany(seedReviews.map(r => ({ ...r, user: adminUser._id })));
+        console.log("Reseñas iniciales creadas.");
+    }
 }
 
 console.log(`Seed completado: ${brands.length} marcas, ${services.length} servicios y ${galleryImages.length} imágenes de galería disponibles.`)

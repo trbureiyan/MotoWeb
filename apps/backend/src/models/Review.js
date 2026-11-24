@@ -6,12 +6,17 @@ const reviewSchema = new mongoose.Schema(
         appointment: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Appointment",
-            required: true
+            required: false
         },
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true
+        },
+        authorName: {
+            type: String,
+            trim: true,
+            maxlength: 100
         },
         rating: {
             type: Number,
@@ -22,11 +27,18 @@ const reviewSchema = new mongoose.Schema(
         comment: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            maxlength: 1000
+        },
+        motorcycle: {
+            type: String,
+            trim: true,
+            default: "",
+            maxlength: 120
         },
         isApproved: {
             type: Boolean,
-            default: false
+            default: true
         }
     },
     {

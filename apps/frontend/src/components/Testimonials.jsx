@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGSAP } from '@gsap/react';
 import { animateMetricValue, animateTestimonialsSection } from '../animations/testimonialsAnimations';
 import { IconStar, IconEye, IconEyeSlash, IconTrash } from './Icons';
+import { resolveReviews } from '../utils/reviews';
 
 function MetricCell({ prefix = '', value, suffix = '', label }) {
   const valueRef = useRef(null);
@@ -182,6 +183,7 @@ export function Testimonials({ loggedInUser, onRequireLogin }) {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [usingFallback, setUsingFallback] = useState(true);
 
   const isAdmin = loggedInUser?.role === 'admin';
 
@@ -195,14 +197,11 @@ export function Testimonials({ loggedInUser, onRequireLogin }) {
     try {
       const res = await fetch('/api/reviews', { credentials: 'include' });
       if (!res.ok) throw new Error('No fue posible cargar las opiniones.');
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setTestimonials(data);
-      } else {
-        setTestimonials(STATIC_TESTIMONIALS);
-      }
+      setTestimonials(resolveReviews(await res.json()));
+      setUsingFallback(false);
     } catch {
       setTestimonials(STATIC_TESTIMONIALS);
+      setUsingFallback(true);
     } finally {
       setLoading(false);
     }
@@ -231,7 +230,8 @@ export function Testimonials({ loggedInUser, onRequireLogin }) {
     if (!res.ok) {
       throw new Error(result.message || 'Error al guardar la reseña.');
     }
-    setTestimonials((prev) => [result, ...prev]);
+    setTestimonials((prev) => [result, ...(usingFallback ? [] : prev)]);
+    setUsingFallback(false);
   };
 
   const handleToggleApprove = async (review) => {
@@ -307,7 +307,7 @@ export function Testimonials({ loggedInUser, onRequireLogin }) {
             return (
               <div key={t.id || `${t.name}-${t.motorcycle}`} className="carousel-item">
                 <div className={`bento-card${t.isApproved === false ? ' review-card-hidden' : ''}`}>
-                  {isAdmin && (
+                  {isAdmin && !usingFallback && (
                     <div className="review-admin-toolbar">
                       {t.isApproved === false && (
                         <span className="review-hidden-badge" title="Esta reseña está oculta a los visitantes">

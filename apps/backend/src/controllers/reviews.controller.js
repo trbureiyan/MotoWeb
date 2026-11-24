@@ -18,7 +18,10 @@ const serializeReview = (r) => {
 };
 
 export const listReviews = async (req, res) => {
-    const isAdmin = req.user?.role === "admin";
+    const account = req.user?.id
+        ? await User.findById(req.user.id).select("role isActive").lean()
+        : null;
+    const isAdmin = account?.isActive && account.role === "admin";
     const filter = isAdmin ? {} : { isApproved: true };
 
     const reviews = await Review.find(filter)

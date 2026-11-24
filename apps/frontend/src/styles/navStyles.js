@@ -1,6 +1,24 @@
 export const navStyles = (T) => `
     .nav-login, .nav-logout { background: transparent; border: 0; color: ${T.muted}; padding: .6rem .25rem; font-family: ${T.mono}; font-size: .62rem; letter-spacing: .08em; cursor: pointer; white-space: nowrap; transition: color .2s; }
     .nav-login:hover, .nav-logout:hover { color: ${T.orange}; }
+    .nav-login-btn {
+      background: transparent;
+      border: 0;
+      color: ${T.muted};
+      padding: .6rem .25rem;
+      font-family: ${T.mono};
+      font-size: .62rem;
+      letter-spacing: .08em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .2s, border-color .2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-login-btn:hover { color: ${T.orange}; }
+    .nav-login-icon { display: none; }
+    .nav-login-text { display: inline; }
     .nav-user { color: ${T.muted}; font-family: ${T.mono}; font-size: .62rem; letter-spacing: .08em; white-space: nowrap; }
     .nav-icon-btn {
       display: inline-flex;

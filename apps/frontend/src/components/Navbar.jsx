@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { IconBell, IconLogout } from './Icons';
+import { IconBell, IconLogout, IconUser, IconLogin } from './Icons';
 
 export function Navbar({ onBooking, isGallery, isNotifications, currentView, onBack, onLogin, onLogout, onAdmin, onMechanic, onNotifications, loggedInUser }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -76,24 +76,34 @@ export function Navbar({ onBooking, isGallery, isNotifications, currentView, onB
         )}
       </div>
 
-      <div className="nav-area-right" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
-        {loggedInUser?.role === 'admin' && (
-          <button className="btn-outline" type="button" onClick={onAdmin} style={{ borderColor: '#ff6200', color: '#ff6200', fontSize: '0.7rem', whiteSpace: 'nowrap', padding: '0.5rem 0.85rem' }}>
-            PANEL ADMIN
-          </button>
-        )}
-
-        {loggedInUser?.role === 'mechanic' && (
-          <button className="btn-outline" type="button" onClick={onMechanic} style={{ borderColor: '#ff6200', color: '#ff6200', fontSize: '0.7rem', whiteSpace: 'nowrap', padding: '0.5rem 0.85rem' }}>
-            PANEL MECÁNICO
-          </button>
-        )}
-
+      <div className="nav-area-right" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem' }}>
         {!isGallery && (loggedInUser ? (
           <>
-            <span className="nav-user" aria-label={`Usuario conectado: ${loggedInUser.name}`}>
-              {loggedInUser.name}
-            </span>
+            {(loggedInUser.role === 'admin' || loggedInUser.role === 'mechanic') && (
+              <button
+                className="nav-icon-btn"
+                type="button"
+                onClick={loggedInUser.role === 'admin' ? onAdmin : onMechanic}
+                aria-label={loggedInUser.role === 'admin' ? 'Panel de Administrador' : 'Panel de Mecánico'}
+                title={loggedInUser.role === 'admin' ? 'Panel de Administrador' : 'Panel de Mecánico'}
+              >
+                <IconUser />
+              </button>
+            )}
+
+            {loggedInUser.role === 'client' && (
+              <button
+                type="button"
+                className={`nav-notifications${isNotifications ? ' active' : ''}`}
+                onClick={() => { closeMobileMenu(); onNotifications(); }}
+                aria-label={`Mis notificaciones${unreadCount ? `, ${unreadCount} sin leer` : ''}`}
+                title="Mis citas y notificaciones"
+              >
+                <IconBell />
+                {unreadCount > 0 && <span className="nav-notification-count">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+              </button>
+            )}
+
             <button
               className="nav-icon-btn"
               type="button"
@@ -105,23 +115,17 @@ export function Navbar({ onBooking, isGallery, isNotifications, currentView, onB
             </button>
           </>
         ) : (
-          <button className="nav-login" type="button" onClick={onLogin}>
-            INICIAR SESIÓN
+          <button
+            className="nav-login-btn"
+            type="button"
+            onClick={onLogin}
+            aria-label="Iniciar sesión"
+            title="Iniciar sesión"
+          >
+            <span className="nav-login-text">INICIAR SESIÓN</span>
+            <span className="nav-login-icon"><IconLogin size={20} /></span>
           </button>
         ))}
-
-        {!isGallery && loggedInUser?.role === 'client' && (
-          <button
-            type="button"
-            className={`nav-notifications${isNotifications ? ' active' : ''}`}
-            onClick={() => { closeMobileMenu(); onNotifications(); }}
-            aria-label={`Mis notificaciones${unreadCount ? `, ${unreadCount} sin leer` : ''}`}
-            title="Mis citas y notificaciones"
-          >
-            <IconBell />
-            {unreadCount > 0 && <span className="nav-notification-count">{unreadCount > 99 ? '99+' : unreadCount}</span>}
-          </button>
-        )}
 
         <button className="btn-orange" onClick={onBooking} style={{ whiteSpace: 'nowrap' }}>
           RESERVAR CITA
@@ -137,6 +141,17 @@ export function Navbar({ onBooking, isGallery, isNotifications, currentView, onB
       <div className={`nav-mobile-menu ${mobileMenuOpen && !isGallery ? 'open' : ''}`}>
         {!isGallery && (
           <ul className="nav-mobile-links">
+            {!loggedInUser && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => { closeMobileMenu(); onLogin && onLogin(); }}
+                  style={{ background: 'none', border: 'none', color: '#ff6200', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'bold', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                >
+                  Iniciar Sesión
+                </button>
+              </li>
+            )}
             {loggedInUser?.role === 'admin' && (
               <li>
                 <button type="button" onClick={() => { closeMobileMenu(); onAdmin && onAdmin(); }} style={{ background: 'none', border: 'none', color: '#ff6200', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: 'bold', cursor: 'pointer', textAlign: 'left', padding: 0 }}>

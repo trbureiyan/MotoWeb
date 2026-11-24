@@ -16,12 +16,18 @@ import {
   ShieldCheckIcon,
   ArrowPathIcon,
   ArrowRightOnRectangleIcon,
+  ArrowLeftOnRectangleIcon,
   BellIcon,
   PhotoIcon,
   ChartBarIcon,
   EyeIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  UserIcon,
+  TrashIcon,
+  EyeSlashIcon,
+  StarIcon as StarOutlineIcon
 } from '@heroicons/react/24/outline';
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 
 export const IconWrench = ({ size = 28 }) => <WrenchScrewdriverIcon width={size} height={size} />;
 export const IconGauge = () => <CogIcon width="28" height="28" />;
@@ -46,5 +52,11 @@ export const IconBell = ({ size = 20 }) => <BellIcon width={size} height={size} 
 export const IconCurrencyDollar = ({ size = 18 }) => <CurrencyDollarIcon width={size} height={size} />;
 export const IconGallery = ({ size = 18 }) => <PhotoIcon width={size} height={size} />;
 export const IconLogout = ({ size = 20 }) => <ArrowRightOnRectangleIcon width={size} height={size} />;
+export const IconLogin = ({ size = 20 }) => <ArrowLeftOnRectangleIcon width={size} height={size} />;
+export const IconUser = ({ size = 20 }) => <UserIcon width={size} height={size} />;
 export const IconChart = ({ size = 18 }) => <ChartBarIcon width={size} height={size} />;
 export const IconEye = ({ size = 18 }) => <EyeIcon width={size} height={size} />;
+export const IconEyeSlash = ({ size = 18 }) => <EyeSlashIcon width={size} height={size} />;
+export const IconTrash = ({ size = 18 }) => <TrashIcon width={size} height={size} />;
+export const IconStar = ({ size = 18, filled = false, className = '' }) => 
+  filled ? <StarSolidIcon width={size} height={size} className={className} /> : <StarOutlineIcon width={size} height={size} className={className} />;

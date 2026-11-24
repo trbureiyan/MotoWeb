@@ -1,0 +1,26 @@
+unit: auth-api
+side_effects:
+  - source_loc: apps/backend/src/controllers/auth.controller.js:21
+    effect: Sets an HTTP-only JWT cookie after successful registration or login.
+    must_preserve: true
+  - source_loc: apps/backend/src/controllers/auth.controller.js:66
+    effect: Clears the token cookie on logout.
+    must_preserve: true
+branches:
+  - source_loc: apps/backend/src/controllers/auth.controller.js:44
+    condition: User is missing, inactive, or password does not match
+    behavior: Returns 401 with a generic authentication error.
+    must_preserve: true
+error_paths:
+  - source_loc: apps/backend/src/routes/auth.routes.js:11
+    trigger: Invalid registration or login payload
+    outcome: Validation middleware rejects the request.
+    contract: HTTP 400 validation response
+    must_preserve: true
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: apps/backend/src/controllers/auth.controller.js:6
+    scope: Password hash, user write and token creation are sequential async operations.
+    isolation: MongoDB default
+    must_preserve: true

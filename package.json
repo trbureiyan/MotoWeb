@@ -2,10 +2,17 @@
   "name": "motoweb",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@12.15.0",
+  "packageManager": "pnpm@11.1.0",
   "scripts": {
     "dev:frontend": "pnpm --filter moto.taller dev",
     "dev:backend": "pnpm --filter backend dev",
     "dev": "pnpm -r --parallel dev"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.24.10",
+    "zod": "^4.6.7"
   }
 }

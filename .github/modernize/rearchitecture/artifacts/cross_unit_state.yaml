@@ -1,0 +1,29 @@
+flows:
+  - name: login-cookie-to-admin-api
+    medium: cookie
+    key: token
+    writer:
+      unit: auth-api
+      source_loc: apps/backend/src/controllers/auth.controller.js:21
+    reader:
+      unit: admin-panel
+      source_loc: apps/frontend/src/components/AdminPanel.jsx:162
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Login as admin, reload the panel and confirm protected requests return 200."
+    notes: "The JWT cookie is HTTP-only and sent with credentials include."
+  - name: app-user-to-booking
+    medium: framework-context
+    key: loggedInUser
+    writer:
+      unit: auth-api
+      source_loc: apps/frontend/src/App.jsx:99
+    reader:
+      unit: appointment-api
+      source_loc: apps/frontend/src/components/BookingModal.jsx:92
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Submit a booking while logged in and verify appointments.user equals the authenticated user."
+    notes: "The browser sends the auth cookie; the backend derives user identity from req.user rather than trusting a body user ID."

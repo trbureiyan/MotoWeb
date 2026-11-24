@@ -97,4 +97,87 @@ export const heroStyles = (T) => `
       text-transform: uppercase;
       margin-top: 0.15rem;
     }
+    .brand-carousel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 1.75rem 0 1.5rem;
+      overflow: hidden;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid ${T.border};
+      background: #0b0b0b;
+      position: relative;
+    }
+    .brand-carousel-title-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.15rem;
+      user-select: none;
+    }
+    .brand-carousel-title {
+      color: ${T.muted};
+      font: 600 0.68rem ${T.mono};
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin: 0;
+      padding: 0;
+      opacity: 0.75;
+    }
+    .brand-carousel-viewport {
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+    }
+    .brand-carousel-track {
+      display: flex;
+      align-items: center;
+      width: max-content;
+      gap: 1.25rem;
+    }
+    .brand-carousel-track.animated {
+      animation: brand-marquee 32s linear infinite;
+    }
+    .brand-carousel-track:hover {
+      animation-play-state: paused;
+    }
+    .brand-carousel-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: clamp(100px, 12vw, 150px);
+      height: 48px;
+      padding: 0 1.5rem;
+      cursor: pointer;
+    }
+    .brand-carousel-logo {
+      display: block;
+      width: 100%;
+      height: 34px;
+      object-fit: contain;
+      filter: grayscale(1);
+      opacity: 0.72;
+      transition: filter 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+    }
+    .brand-carousel-item:hover .brand-carousel-logo {
+      filter: grayscale(0);
+      opacity: 1;
+      transform: scale(1.08);
+    }
+    @keyframes brand-marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-33.333%); }
+    }
+    @keyframes brand-dot-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px ${T.orange}; }
+      50% { transform: scale(1.25); opacity: 0.65; box-shadow: 0 0 14px ${T.orange}; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .brand-carousel-track.animated { animation-duration: 50s; }
+    }
   `;

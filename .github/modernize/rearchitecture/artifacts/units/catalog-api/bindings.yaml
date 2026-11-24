@@ -1,0 +1,13 @@
+unit: catalog-api
+bindings:
+  - type: route-declaration
+    name: brands and services routers
+    source_loc: apps/backend/src/routes/index.js:11
+    target: catalog routers
+    must_appear_in_target: true
+  - type: filter
+    name: adminRequired on writes
+    source_loc: apps/backend/src/routes/brands.routes.js:9
+    target: catalog writes
+    must_appear_in_target: true
+runtime_config: []

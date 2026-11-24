@@ -1,0 +1,26 @@
+unit: catalog-api
+side_effects:
+  - source_loc: apps/backend/src/controllers/brands.controller.js:12
+    effect: Creates or updates a persisted brand for admin catalog management.
+    must_preserve: true
+  - source_loc: apps/backend/src/controllers/services.controller.js:10
+    effect: Creates or updates a persisted service for admin catalog management.
+    must_preserve: true
+branches:
+  - source_loc: apps/backend/src/controllers/brands.controller.js:6
+    condition: active query is not false
+    behavior: Lists active brands for public booking; admin may request all records.
+    must_preserve: true
+error_paths:
+  - source_loc: apps/backend/src/controllers/brands.controller.js:12
+    trigger: Missing name/slug or duplicate slug
+    outcome: Returns 400 or 409 without creating a duplicate.
+    contract: HTTP 400/409 JSON message
+    must_preserve: true
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: apps/backend/src/controllers/brands.controller.js:12
+    scope: One catalog document write per request.
+    isolation: MongoDB default
+    must_preserve: true

@@ -1,0 +1,27 @@
+modules:
+  - name: auth-cookie
+    kind: config
+    source_loc: apps/backend/src/middlewares/validate.token.js:4
+    used_by_units: [auth-api, appointment-api, user-admin-api, catalog-api]
+    fields:
+      - name: token
+        type: "httpOnly JWT cookie"
+      - name: authRequired
+        type: "Express middleware"
+      - name: adminRequired
+        type: "Express middleware"
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "Shared authentication boundary for protected API operations."
+  - name: app-api-proxy
+    kind: config
+    source_loc: apps/frontend/vite.config.js:8
+    used_by_units: [admin-panel]
+    fields:
+      - name: api-proxy
+        type: "Vite /api proxy to localhost:3000"
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "Keeps browser API calls same-origin during local development."

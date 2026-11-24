@@ -37,6 +37,7 @@ export const galleryPageStyles = (T) => `
     .hs-header {
       margin-top: auto;
       margin-bottom: 2rem;
+      pointer-events: auto;
     }
     .hs-title {
       font-family: ${T.head};

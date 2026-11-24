@@ -1,0 +1,13 @@
+unit: appointment-api
+bindings:
+  - type: route-declaration
+    name: appointments router
+    source_loc: apps/backend/src/routes/index.js:10
+    target: appointment router
+    must_appear_in_target: true
+  - type: filter
+    name: authRequired and adminRequired
+    source_loc: apps/backend/src/routes/appointments.routes.js:8
+    target: admin list/update and authenticated create
+    must_appear_in_target: true
+runtime_config: []

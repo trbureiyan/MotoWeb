@@ -1,0 +1,65 @@
+contracts:
+  - name: admin-appointments
+    unit: appointment-api
+    type: rest
+    stability: must_preserve
+    source_loc: apps/backend/src/routes/appointments.routes.js:8
+    contract:
+      method: "GET /api/appointments; PATCH /api/appointments/:id"
+      path: "/api/appointments"
+      request: "status filter; PATCH status or adminNotes"
+      response: "appointment list or serialized appointment with user, brand and service names"
+      error: "401/403 auth; 400 validation; 404 missing appointment"
+      auth: "JWT cookie + admin role"
+    target_contract:
+      method: "Express handlers listAppointments/updateAppointment"
+      notes: "IDs are exposed as id and populated references are flattened to brand/service names for the current AdminPanel."
+    semantic_divergence: []
+  - name: appointment-create
+    unit: appointment-api
+    type: rest
+    stability: must_preserve
+    source_loc: apps/backend/src/routes/appointments.routes.js:9
+    contract:
+      method: "POST"
+      path: "/api/appointments"
+      request: "brand, service, motorcycleModel, requestedDate"
+      response: "201 serialized pending appointment"
+      error: "401 unauthenticated; 400 invalid references or fields"
+      auth: "JWT cookie"
+    target_contract:
+      method: "Express createAppointment(req, res)"
+      notes: "Brand and service accept Mongo IDs or exact catalog names."
+    semantic_divergence: []
+  - name: catalog-admin
+    unit: catalog-api
+    type: rest
+    stability: must_preserve
+    source_loc: apps/backend/src/routes/brands.routes.js:8
+    contract:
+      method: "GET public; POST/PATCH admin"
+      path: "/api/brands and /api/services"
+      request: "catalog fields; PATCH partial fields"
+      response: "JSON entities with id"
+      error: "400 validation; 401/403 writes"
+      auth: "JWT cookie + admin role for writes"
+    target_contract:
+      method: "Express catalog handlers"
+      notes: "GET defaults to active records; admin can pass active=false."
+    semantic_divergence: []
+  - name: user-admin
+    unit: user-admin-api
+    type: rest
+    stability: must_preserve
+    source_loc: apps/backend/src/routes/users.routes.js:8
+    contract:
+      method: "GET; PATCH"
+      path: "/api/users"
+      request: "PATCH role or isActive"
+      response: "User records without passwordHash"
+      error: "401/403 auth; 400 invalid ID or role"
+      auth: "JWT cookie + admin role"
+    target_contract:
+      method: "Express listUsers/updateUser"
+      notes: "Credential hashes are never serialized."
+    semantic_divergence: []

@@ -1,0 +1,34 @@
+user_intent:
+  raw_request: "Conectar el panel administrativo con el backend y cargar datos iniciales en MongoDB."
+  inferred_acceptance:
+    - "El panel lee y modifica datos persistidos."
+    - "Las reservas crean documentos en appointments."
+    - "El seed es repetible y crea el catálogo necesario."
+  cleanup_required: false
+strategy: minimal_runtime
+runtime_reachable:
+  - apps/frontend/src/components/AdminPanel.jsx
+  - apps/frontend/src/components/BookingModal.jsx
+  - apps/backend/src/routes/index.js
+  - apps/backend/scripts/seed.js
+must_rewrite:
+  - path: apps/frontend/src/components/AdminPanel.jsx
+    reason: "Reemplazar estado local y mutaciones simuladas por llamadas API."
+  - path: apps/frontend/src/components/BookingModal.jsx
+    reason: "Persistir reservas en el backend."
+  - path: apps/backend/src/routes/index.js
+    reason: "Montar los recursos administrativos y de reservas."
+  - path: apps/backend/src/controllers/appointments.controller.js
+    reason: "Implementar persistencia y serialización de citas."
+  - path: apps/backend/scripts/seed.js
+    reason: "Cargar datos iniciales de catálogo y administrador."
+copy_as_is:
+  - apps/backend/src/models/Appointment.js
+  - apps/backend/src/models/Brand.js
+  - apps/backend/src/models/Service.js
+legacy_allowed_to_remain:
+  - apps/frontend/src/components/AdminPanel.jsx:INITIAL_* constants are unused after API wiring
+defer_cleanup:
+  - "Eliminar los arrays INITIAL_* de AdminPanel.jsx en una limpieza posterior."
+full_rewrite_reason: null
+implementation_rule: "La implementación se limita a must_rewrite y a los controladores/rutas necesarios para sus contratos."

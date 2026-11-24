@@ -1,0 +1,30 @@
+unit: appointment-api
+side_effects:
+  - source_loc: apps/backend/src/controllers/appointments.controller.js:32
+    effect: Creates a pending appointment linked to the authenticated user, brand and service.
+    must_preserve: true
+  - source_loc: apps/backend/src/controllers/appointments.controller.js:61
+    effect: Persists admin status and notes changes.
+    must_preserve: true
+branches:
+  - source_loc: apps/backend/src/controllers/appointments.controller.js:34
+    condition: Required booking fields or catalog references are missing
+    behavior: Rejects the booking with a 400 response.
+    must_preserve: true
+  - source_loc: apps/backend/src/controllers/appointments.controller.js:61
+    condition: PATCH contains status or adminNotes
+    behavior: Updates only allowed appointment administration fields.
+    must_preserve: true
+error_paths:
+  - source_loc: apps/backend/src/controllers/appointments.controller.js:36
+    trigger: Invalid brand/service/date or unauthenticated request
+    outcome: No appointment is written.
+    contract: HTTP 400 or 401 JSON message
+    must_preserve: true
+concurrency:
+  model: async
+  tx_boundary:
+    source_loc: apps/backend/src/controllers/appointments.controller.js:32
+    scope: Reference lookup, appointment write and response population.
+    isolation: MongoDB default
+    must_preserve: true

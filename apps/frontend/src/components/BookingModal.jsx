@@ -2,16 +2,48 @@ import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { IconX } from './Icons';
+import { BrandLogo } from './BrandLogo';
 import { T } from '../styles/tokens';
 
-const FALLBACK_BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI', 'OTRO'];
-const MOTIVOS = ['MANTENIMIENTO PREVENTIVO', 'TUNING ECU / MAPEO', 'FRENOS', 'DIAGNÓSTICO', 'PREPARACIÓN CIRCUITO', 'OTRO'];
+const TARGET_BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI', 'APRILIA'];
+const FALLBACK_BRANDS = TARGET_BRANDS.map(name => ({ name, slug: name.toLowerCase(), logoUrl: '' }));
+const MOTIVOS = ['DIAGNÓSTICO', 'REVISIÓN', 'MANTENIMIENTO PREVENTIVO'];
+const CUSTOM_BRAND = 'CUSTOM';
 
-export function BookingModal({ onClose }) {
-  const [step, setStep] = useState(0);
-  const [data, setData] = useState({ brand: '', motivo: '', fecha: '', nombre: '', telefono: '', modelo: '' });
+function BrandOption({ brand, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      className={`brand-btn brand-logo-btn${selected ? ' selected' : ''}`}
+      onClick={onClick}
+      aria-label={brand.name}
+      title={brand.name}
+    >
+      <BrandLogo brand={brand} className="brand-option-logo" allowTextFallback />
+    </button>
+  );
+}
+
+export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialData }) {
+  const [step, setStep] = useState(initialData?.step ?? 0);
+  const [data, setData] = useState(initialData?.data || {
+    brand: '',
+    brandName: '',
+    brandRequestId: '',
+    brandRequestName: '',
+    brandRequestOpen: false,
+    motivo: '',
+    fecha: '',
+    modelo: ''
+  });
+  const [brandRequestOpen, setBrandRequestOpen] = useState(initialData?.data?.brandRequestOpen || false);
+  const [brandRequestLoading, setBrandRequestLoading] = useState(false);
+  const [brandRequestError, setBrandRequestError] = useState('');
   const [brands, setBrands] = useState([]);
   const [loadingBrands, setLoadingBrands] = useState(false);
+  const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const modalRef = useRef();
 
   useGSAP(() => {
@@ -27,50 +59,114 @@ export function BookingModal({ onClose }) {
 
   useEffect(() => {
     setLoadingBrands(true);
-    fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/motorcycle?format=json')
+    fetch('/api/brands')
       .then(r => r.json())
-      .then(d => {
-        const results = d.Results;
-        if (results && results.length > 0) {
-          // Tomar unas 12 marcas de la API para no saturar la UI
-          setBrands(results.map(r => r.MakeName).slice(0, 12));
-        } else {
-          setBrands(FALLBACK_BRANDS);
-        }
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) throw new Error('No hay marcas disponibles');
+        setBrands(data.filter(brand => brand.isActive !== false));
       })
       .catch(() => setBrands(FALLBACK_BRANDS))
       .finally(() => setLoadingBrands(false));
   }, []);
 
   const update = (key, val) => {
-    let sanitizedVal = val;
-    if (key === 'nombre') {
-      sanitizedVal = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-    } else if (key === 'telefono') {
-      sanitizedVal = val.replace(/\D/g, '').slice(0, 10);
-    }
-    setData(d => ({ ...d, [key]: sanitizedVal }));
+    setData(d => ({ ...d, [key]: val }));
   };
 
   const steps = [
     { label: 'PASO 01', title: 'SELECCIONA LA MARCA', sub: 'Elige la marca de tu moto' },
     { label: 'PASO 02', title: 'MOTIVO DE INGRESO', sub: 'Define el tipo de servicio requerido' },
     { label: 'PASO 03', title: 'FECHA Y MODELO', sub: 'Agenda tu cita con nosotros' },
-    { label: 'PASO 04', title: 'DATOS DEL PILOTO', sub: 'Información para confirmar tu reserva' },
+    { label: 'PASO 04', title: 'RESUMEN DE TU CITA', sub: 'Revisa los detalles antes de confirmar' },
   ];
 
   const canNext = () => {
-    if (step === 0) return !!data.brand;
-    if (step === 1) return !!data.motivo;
-    if (step === 2) return data.fecha && data.modelo.trim().length > 2;
-    if (step === 3) {
-      return data.nombre.trim().length > 2 && data.telefono.length === 10;
+    if (step === 0) {
+      if (!data.brand) return false;
+      if (data.brand === CUSTOM_BRAND) return Boolean(data.brandRequestId && data.brandName);
+      return true;
     }
+    if (step === 1) {
+      return MOTIVOS.includes(data.motivo);
+    }
+    if (step === 2) return data.fecha && data.modelo.trim().length > 2;
+    if (step === 3) return true;
     return false;
   };
 
-  const [done, setDone] = useState(false);
   const today = new Date().toISOString().split('T')[0];
+
+  const selectedBrand = brands.find(brand => brand.slug === data.brand || brand.name === data.brand);
+  const displayBrand = data.brand === CUSTOM_BRAND
+    ? data.brandName
+    : selectedBrand?.name || data.brandName || data.brand;
+
+  const displayMotivo = data.motivo;
+
+  const confirmAppointment = async () => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(data.brand === CUSTOM_BRAND
+            ? { brandRequestId: data.brandRequestId }
+            : { brand: data.brand }),
+          service: data.motivo,
+          motorcycleModel: data.modelo,
+          requestedDate: data.fecha
+        })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'No fue posible registrar la cita.');
+      setDone(true);
+      window.dispatchEvent(new Event('notifications:updated'));
+      window.dispatchEvent(new Event('appointments:updated'));
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitBrandRequest = async (event) => {
+    event.preventDefault();
+    setBrandRequestError('');
+    if (!loggedInUser) {
+      onRequireLogin?.({
+        step,
+        data: { ...data, brandRequestOpen: true }
+      });
+      return;
+    }
+
+    setBrandRequestLoading(true);
+    try {
+      const response = await fetch('/api/brands/requests', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.brandRequestName })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'No fue posible enviar la solicitud.');
+      setData(current => ({
+        ...current,
+        brand: CUSTOM_BRAND,
+        brandName: result.name,
+        brandRequestId: result.id,
+        brandRequestOpen: false
+      }));
+      setBrandRequestOpen(false);
+    } catch (error) {
+      setBrandRequestError(error.message || 'No se pudo conectar con el servidor.');
+    } finally {
+      setBrandRequestLoading(false);
+    }
+  };
 
   return (
     <div
@@ -101,9 +197,9 @@ export function BookingModal({ onClose }) {
         {done ? (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
             <div style={{ color: T.orange, fontSize: '2.5rem', marginBottom: '1rem' }}>✓</div>
-            <div className="modal-title">CITA CONFIRMADA</div>
+            <div className="modal-title">SOLICITUD RECIBIDA</div>
             <p style={{ color: T.muted, fontSize: '0.85rem', marginTop: '0.75rem', fontFamily: T.mono }}>
-              Recibirás confirmación en breve, {data.nombre}. ¡Nos vemos en el paddock!
+              Tu solicitud quedó pendiente de confirmación por el taller{loggedInUser?.name ? `, ${loggedInUser.name}` : ''}. Consulta su estado en Mis citas.
             </p>
             <button className="btn-orange" style={{ marginTop: '1.5rem' }} onClick={onClose}>CERRAR</button>
           </div>
@@ -119,24 +215,47 @@ export function BookingModal({ onClose }) {
             <p className="modal-sub">{steps[step].sub}</p>
 
             {step === 0 && (
-              <div className="brand-grid">
-                {loadingBrands ? (
-                  <div
-                    style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '2rem 0' }}
-                    data-uk-spinner="ratio: 1.5"
-                    role="status"
-                    aria-live="polite"
-                    aria-busy="true"
-                  ></div>
-                ) : (
-                  brands.map(b => (
-                    <button
-                      key={b}
-                      type="button"
-                      className={`brand-btn${data.brand === b ? ' selected' : ''}`}
-                      onClick={() => update('brand', b)}
-                    >{b}</button>
-                  ))
+              <div>
+                <div className="brand-grid">
+                  {loadingBrands ? (
+                    <div
+                      style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '2rem 0' }}
+                      data-uk-spinner="ratio: 1.5"
+                      role="status"
+                      aria-live="polite"
+                      aria-busy="true"
+                    ></div>
+                  ) : (
+                    <>
+                      {brands.map(brand => (
+                        <BrandOption
+                          key={brand.id || brand.slug}
+                          brand={brand}
+                          selected={data.brand === brand.slug || data.brand === brand.name}
+                          onClick={() => setData(current => ({
+                            ...current,
+                            brand: brand.slug || brand.name,
+                            brandName: brand.name,
+                            brandRequestId: ''
+                          }))}
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        className="brand-btn brand-other-btn"
+                        onClick={() => {
+                          setBrandRequestError('');
+                          setBrandRequestOpen(true);
+                          update('brandRequestOpen', true);
+                        }}
+                      >
+                        <span aria-hidden="true">+</span> OTRA MARCA
+                      </button>
+                    </>
+                  )}
+                </div>
+                {data.brand === CUSTOM_BRAND && (
+                  <p className="brand-review-note">Marca en revisión. Puedes reservar mientras el taller revisa la solicitud.</p>
                 )}
               </div>
             )}
@@ -178,20 +297,66 @@ export function BookingModal({ onClose }) {
             )}
 
             {step === 3 && (
-              <div>
-                <input
-                  className="modal-input"
-                  placeholder="Nombre completo"
-                  value={data.nombre}
-                  onChange={e => update('nombre', e.target.value)}
-                />
-                <input
-                  className="modal-input"
-                  placeholder="Teléfono o WhatsApp (10 dígitos)"
-                  value={data.telefono}
-                  maxLength={10}
-                  onChange={e => update('telefono', e.target.value)}
-                />
+              <div className="booking-summary">
+                <div className="summary-card">
+                  <div className="summary-card-title">DETALLES DE LA RESERVA</div>
+                  <div className="summary-row">
+                    <span className="summary-label">MARCA:</span>
+                    <span className="summary-value">{displayBrand || 'NO DEFINIDA'}</span>
+                  </div>
+                  {data.brand === CUSTOM_BRAND && (
+                    <p className="brand-review-note">La marca se guardará en la cita con el nombre sugerido y quedará pendiente de revisión por el taller.</p>
+                  )}
+                  <div className="summary-row">
+                    <span className="summary-label">MODELO:</span>
+                    <span className="summary-value">{data.modelo || 'NO DEFINIDO'}</span>
+                  </div>
+                  <div className="summary-row">
+                    <span className="summary-label">SERVICIO:</span>
+                    <span className="summary-value">{displayMotivo || 'NO DEFINIDO'}</span>
+                  </div>
+                  <div className="summary-row">
+                    <span className="summary-label">FECHA SOLICITADA:</span>
+                    <span className="summary-value">{data.fecha || 'NO DEFINIDA'}</span>
+                  </div>
+                </div>
+
+                {submitError && (
+                  <div className="summary-alert" role="alert">
+                    <div>
+                      <div className="summary-alert-title">NO SE PUDO REGISTRAR LA CITA</div>
+                      <p className="summary-alert-text">{submitError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {loggedInUser ? (
+                  <div className="summary-card">
+                    <div className="summary-card-title">DATOS DEL PILOTO (DE TU CUENTA)</div>
+                    <div className="summary-row">
+                      <span className="summary-label">PILOTO:</span>
+                      <span className="summary-value">{loggedInUser.name}</span>
+                    </div>
+                    <div className="summary-row">
+                      <span className="summary-label">CONTACTO / TEL:</span>
+                      <span className="summary-value">{loggedInUser.phone || 'NO REGISTRADO'}</span>
+                    </div>
+                    <div className="summary-row">
+                      <span className="summary-label">CORREO:</span>
+                      <span className="summary-value" style={{ textTransform: 'lowercase' }}>{loggedInUser.email}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="summary-alert">
+                    <div style={{ fontSize: '1.2rem', lineHeight: 1 }}>⚠️</div>
+                    <div>
+                      <div className="summary-alert-title">INICIO DE SESIÓN REQUERIDO</div>
+                      <p className="summary-alert-text">
+                        Para registrar tu cita con un nombre y teléfono válidos, debes iniciar sesión con tu cuenta. Tus datos seleccionados se conservarán.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -200,14 +365,115 @@ export function BookingModal({ onClose }) {
                 ? <button className="btn-back" onClick={() => setStep(s => s - 1)}>← ATRÁS</button>
                 : <div />
               }
-              {step < steps.length - 1
-                ? <button className="btn-orange" disabled={!canNext()} onClick={() => setStep(s => s + 1)} style={{ opacity: canNext() ? 1 : 0.4 }}>SIGUIENTE →</button>
-                : <button className="btn-orange" disabled={!canNext()} onClick={() => setDone(true)} style={{ opacity: canNext() ? 1 : 0.4 }}>CONFIRMAR CITA</button>
-              }
+              {step < steps.length - 1 ? (
+                <button
+                  className="btn-orange"
+                  disabled={!canNext()}
+                  onClick={() => setStep(s => s + 1)}
+                  style={{ opacity: canNext() ? 1 : 0.4 }}
+                >
+                  SIGUIENTE →
+                </button>
+              ) : loggedInUser ? (
+                <button
+                  className="btn-orange"
+                  onClick={confirmAppointment}
+                  disabled={!canNext() || submitting}
+                  style={{ opacity: canNext() && !submitting ? 1 : 0.4 }}
+                >
+                  {submitting ? 'REGISTRANDO...' : 'ENVIAR SOLICITUD'}
+                </button>
+              ) : (
+                <button
+                  className="btn-orange"
+                  onClick={() => onRequireLogin && onRequireLogin({ step: 3, data })}
+                >
+                  INICIAR SESIÓN PARA CONFIRMAR →
+                </button>
+              )}
             </div>
           </>
         )}
       </div>
+      {brandRequestOpen && (
+        <div
+          className="brand-request-overlay"
+          onClick={event => {
+            event.stopPropagation();
+            setBrandRequestOpen(false);
+            update('brandRequestOpen', false);
+          }}
+          onKeyDown={event => {
+            event.stopPropagation();
+            if (event.key === 'Escape') {
+              setBrandRequestOpen(false);
+              update('brandRequestOpen', false);
+            }
+          }}
+        >
+          <section
+            className="brand-request-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="brand-request-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              type="button"
+              aria-label="Cerrar"
+              onClick={() => {
+                setBrandRequestOpen(false);
+                update('brandRequestOpen', false);
+              }}
+            >
+              <IconX />
+            </button>
+            <div className="modal-step-label">SOLICITUD DE MARCA</div>
+            <h2 className="modal-title" id="brand-request-title">¿NO ENCUENTRAS TU MARCA?</h2>
+            <p className="modal-sub">
+              Envía el nombre y el taller revisará la solicitud. El equipo administrador agregará el identificador y el logo.
+            </p>
+            <form onSubmit={submitBrandRequest}>
+              <label className="brand-request-label" htmlFor="brand-request-name">NOMBRE DE LA MARCA</label>
+              <input
+                className="modal-input"
+                id="brand-request-name"
+                autoFocus
+                maxLength={80}
+                required
+                minLength={2}
+                value={data.brandRequestName || ''}
+                onChange={event => update('brandRequestName', event.target.value)}
+                placeholder="Ej. Royal Enfield"
+              />
+              {brandRequestError && <p className="login-error" role="alert">{brandRequestError}</p>}
+              {!loggedInUser && (
+                <p className="brand-review-note">Para enviar una sugerencia necesitas iniciar sesión. El nombre escrito se conservará.</p>
+              )}
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn-back"
+                  onClick={() => {
+                    setBrandRequestOpen(false);
+                    update('brandRequestOpen', false);
+                  }}
+                >
+                  CANCELAR
+                </button>
+                <button
+                  className="btn-orange"
+                  type="submit"
+                  disabled={brandRequestLoading || (loggedInUser && (data.brandRequestName || '').trim().length < 2)}
+                >
+                  {brandRequestLoading ? 'ENVIANDO…' : loggedInUser ? 'ENVIAR SOLICITUD' : 'INICIAR SESIÓN →'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

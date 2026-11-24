@@ -1,1 +1,28 @@
 // Monta todos los routers bajo /api
+import { Router } from 'express';
+import authRoutes from './auth.routes.js';
+import appointmentsRoutes from './appointments.routes.js';
+import analyticsRoutes from './analytics.routes.js';
+import brandsRoutes from './brands.routes.js';
+import servicesRoutes from './services.routes.js';
+import usersRoutes from './users.routes.js';
+import notificationsRoutes from './notifications.routes.js';
+import paymentsRoutes from './payments.routes.js';
+import galleryRoutes from './gallery.routes.js';
+import chatRoutes from './chat.routes.js';
+import reviewsRoutes from './reviews.routes.js';
+
+const router = Router();
+router.use('/auth', authRoutes);
+router.use('/appointments', appointmentsRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/brands', brandsRoutes);
+router.use('/services', servicesRoutes);
+router.use('/users', usersRoutes);
+router.use('/notifications', notificationsRoutes);
+router.use('/payments', paymentsRoutes);
+router.use('/gallery', galleryRoutes);
+router.use('/chat', chatRoutes);
+router.use('/reviews', reviewsRoutes);
+
+export default router;

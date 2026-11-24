@@ -1,0 +1,8 @@
+unit: user-admin-api
+bindings:
+  - type: filter
+    name: authRequired and adminRequired
+    source_loc: apps/backend/src/routes/users.routes.js:8
+    target: user list/update routes
+    must_appear_in_target: true
+runtime_config: []

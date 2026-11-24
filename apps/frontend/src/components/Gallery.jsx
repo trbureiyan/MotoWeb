@@ -133,8 +133,8 @@ export function Gallery({ onViewMore, items, isAdmin, onAddImage, loading, error
         <p className="section-sub reveal">
           Cada moto que entra al paddock recibe atencion de nivel competitivo y un reporte claro del trabajo.
         </p>
-        <GalleryLoadingState loading={loading} error={error} empty={!items.length} />
-        {!loading && !error && featuredItems.length > 0 && (
+        <GalleryLoadingState loading={loading && !items.length} error={error && !items.length ? error : ''} empty={!loading && !items.length} />
+        {featuredItems.length > 0 && (
           <GalleryGrid items={featuredItems} variant="featured" onSelect={setLightbox} />
         )}
         <div className="gallery-actions reveal">
@@ -303,7 +303,7 @@ export function GalleryPage({ onBack, items, isAdmin, onAddImage, loading, error
           {/* Spacer for initial title */}
           <div className="hs-spacer" />
 
-          {!loading && !error && items.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               className="hs-item"
@@ -417,9 +417,9 @@ export function GalleryPage({ onBack, items, isAdmin, onAddImage, loading, error
           </div>
         </div>
       )}
-      {(loading || error || (!items.length && !loading)) && (
+      {(!items.length) && (
         <div className="gallery-page-status">
-          <GalleryLoadingState loading={loading} error={error} empty={!items.length} />
+          <GalleryLoadingState loading={loading} error={error} empty={!items.length && !loading} />
         </div>
       )}
       {showImageModal && (

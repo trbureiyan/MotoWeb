@@ -10,4 +10,8 @@ const normalizedMongoUri = configuredMongoUri
     .trim()
     .replace(/%20(?=\?|$)/i, '')
 
+if (process.env.NODE_ENV === 'production' && !normalizedMongoUri) {
+    throw new Error('MONGODB_URI es obligatorio en producción.')
+}
+
 export const MONGO_URI = normalizedMongoUri || "mongodb://localhost:27017/motoweb"

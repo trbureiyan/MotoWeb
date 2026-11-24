@@ -99,34 +99,52 @@ export const heroStyles = (T) => `
     }
     .brand-carousel {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: clamp(1.25rem, 4vw, 3.5rem);
-      min-height: 96px;
-      padding: 1.1rem clamp(1.5rem, 6vw, 6rem);
+      justify-content: center;
+      width: 100%;
+      padding: 1.75rem 0 1.5rem;
       overflow: hidden;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
       border-bottom: 1px solid ${T.border};
-      background: ${T.bg1};
+      background: #0b0b0b;
+      position: relative;
     }
-    .brand-carousel-label {
-      flex: 0 0 auto;
+    .brand-carousel-title-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.15rem;
+      user-select: none;
+    }
+    .brand-carousel-title {
       color: ${T.muted};
-      font: 500 0.62rem ${T.mono};
-      letter-spacing: 0.16em;
-      white-space: nowrap;
+      font: 600 0.68rem ${T.mono};
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin: 0;
+      padding: 0;
+      opacity: 0.75;
     }
     .brand-carousel-viewport {
-      flex: 1;
+      width: 100%;
       min-width: 0;
       overflow: hidden;
-      mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+      mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
     }
     .brand-carousel-track {
       display: flex;
       align-items: center;
       width: max-content;
+      gap: 1.25rem;
     }
     .brand-carousel-track.animated {
-      animation: brand-marquee 42s linear infinite;
+      animation: brand-marquee 32s linear infinite;
+    }
+    .brand-carousel-track:hover {
+      animation-play-state: paused;
     }
     .brand-carousel-item {
       display: flex;
@@ -135,12 +153,7 @@ export const heroStyles = (T) => `
       width: clamp(100px, 12vw, 150px);
       height: 48px;
       padding: 0 1.5rem;
-      color: ${T.muted};
-      font: 700 0.7rem ${T.head};
-      letter-spacing: 0.08em;
-      text-align: center;
-      text-transform: uppercase;
-      white-space: nowrap;
+      cursor: pointer;
     }
     .brand-carousel-logo {
       display: block;
@@ -149,11 +162,22 @@ export const heroStyles = (T) => `
       object-fit: contain;
       filter: grayscale(1);
       opacity: 0.72;
-      transition: filter 0.2s, opacity 0.2s;
+      transition: filter 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
     }
-    .brand-carousel-item:hover .brand-carousel-logo { filter: grayscale(0); opacity: 1; }
-    @keyframes brand-marquee { to { transform: translateX(-50%); } }
+    .brand-carousel-item:hover .brand-carousel-logo {
+      filter: grayscale(0);
+      opacity: 1;
+      transform: scale(1.08);
+    }
+    @keyframes brand-marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-33.333%); }
+    }
+    @keyframes brand-dot-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px ${T.orange}; }
+      50% { transform: scale(1.25); opacity: 0.65; box-shadow: 0 0 14px ${T.orange}; }
+    }
     @media (prefers-reduced-motion: reduce) {
-      .brand-carousel-track.animated { animation-duration: 60s; }
+      .brand-carousel-track.animated { animation-duration: 50s; }
     }
   `;

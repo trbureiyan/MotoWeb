@@ -19,7 +19,7 @@ function BrandOption({ brand, selected, onClick }) {
       aria-label={brand.name}
       title={brand.name}
     >
-      <BrandLogo brand={brand} className="brand-option-logo" />
+      <BrandLogo brand={brand} className="brand-option-logo" allowTextFallback />
     </button>
   );
 }

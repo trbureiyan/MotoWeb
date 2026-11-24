@@ -197,9 +197,9 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
         {done ? (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
             <div style={{ color: T.orange, fontSize: '2.5rem', marginBottom: '1rem' }}>✓</div>
-            <div className="modal-title">CITA CONFIRMADA</div>
+            <div className="modal-title">SOLICITUD RECIBIDA</div>
             <p style={{ color: T.muted, fontSize: '0.85rem', marginTop: '0.75rem', fontFamily: T.mono }}>
-              Recibirás confirmación en breve{loggedInUser?.name ? `, ${loggedInUser.name}` : ''}. ¡Nos vemos en el paddock!
+              Tu solicitud quedó pendiente de confirmación por el taller{loggedInUser?.name ? `, ${loggedInUser.name}` : ''}. Consulta su estado en Mis citas.
             </p>
             <button className="btn-orange" style={{ marginTop: '1.5rem' }} onClick={onClose}>CERRAR</button>
           </div>
@@ -381,7 +381,7 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
                   disabled={!canNext() || submitting}
                   style={{ opacity: canNext() && !submitting ? 1 : 0.4 }}
                 >
-                  {submitting ? 'REGISTRANDO...' : 'CONFIRMAR CITA'}
+                  {submitting ? 'REGISTRANDO...' : 'ENVIAR SOLICITUD'}
                 </button>
               ) : (
                 <button

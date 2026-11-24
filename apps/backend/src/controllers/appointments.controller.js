@@ -291,6 +291,15 @@ export const updateAppointment = async (req, res) => {
         if (!appointmentDocument) return res.status(404).json({ message: "Cita no encontrada" })
 
         const previousStatus = appointmentDocument.status
+        if (allowed.status && allowed.status !== previousStatus &&
+            !({
+                pending: ["confirmed", "cancelled"],
+                confirmed: ["completed", "cancelled"],
+                completed: [],
+                cancelled: []
+            }[previousStatus] || []).includes(allowed.status)) {
+            return res.status(409).json({ message: "La transición de estado no está disponible." })
+        }
         const isRoot = !appointmentDocument.parentAppointment
         if (hasNovedadesInput) {
             if (!isRoot) return res.status(400).json({ message: "Solo la cita original puede registrar novedades." })
@@ -328,6 +337,15 @@ export const updateAppointment = async (req, res) => {
             return res.status(400).json({ message: "Indica un monto final mayor que cero para completar la cita." })
         }
 
+        // Crear primero el pago evita dejar una cita completada sin pago si falla la creación.
+        if (shouldCreatePayment) {
+            await Payment.create({
+                appointment: appointmentDocument._id,
+                amount: paymentAmount,
+                status: "pending"
+            })
+        }
+
         delete allowed.paymentAmount
         Object.assign(appointmentDocument, allowed)
         if (hasNovedadesInput) appointmentDocument.novedades = novedadesInput
@@ -339,15 +357,9 @@ export const updateAppointment = async (req, res) => {
         }
         await appointmentDocument.save()
 
-        if (shouldCreatePayment) {
-            await Payment.create({
-                appointment: appointmentDocument._id,
-                amount: paymentAmount,
-                status: "pending"
-            })
-        } else if (allowed.status === "completed" && existingPayment?.status === "pending" &&
+        if (allowed.status === "completed" && existingPayment?.status === "pending" &&
             Number.isFinite(paymentAmount) && paymentAmount > 0) {
-            // Re-completar una cita cancelada actualiza el monto sin duplicar el pago.
+            // Permite corregir el monto pendiente sin duplicar el pago.
             existingPayment.amount = paymentAmount
             await existingPayment.save()
         }

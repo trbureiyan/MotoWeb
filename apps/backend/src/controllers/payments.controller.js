@@ -54,10 +54,10 @@ export const simulateChainPayment = async (req, res) => {
         return res.status(404).json({ message: "No se encontró la cita original de la cadena." });
     }
 
-    // Excluye citas canceladas: sus pagos pendientes ya no deben cobrarse.
+    // Solo servicios completados pueden generar un cobro simulado.
     const chainAppointments = await Appointment.find({
         user: req.user.id,
-        status: { $ne: "cancelled" },
+        status: "completed",
         $or: [{ _id: root._id }, { chainRoot: root._id }]
     }).select("_id").lean();
     const chainIds = chainAppointments.map(item => item._id);
@@ -76,24 +76,30 @@ export const simulateChainPayment = async (req, res) => {
     }
 
     const paidAt = new Date();
-    const total = pendingPayments.reduce((sum, payment) => sum + payment.amount, 0);
-    await Payment.updateMany(
-        { _id: { $in: pendingPayments.map(payment => payment._id) } },
-        { status: "paid", paidAt }
-    );
+    const claimedPayments = (await Promise.all(pendingPayments.map(payment =>
+        Payment.findOneAndUpdate(
+            { _id: payment._id, status: "pending" },
+            { status: "paid", paidAt },
+            { new: true, runValidators: true }
+        ).lean()
+    ))).filter(Boolean);
+    if (!claimedPayments.length) {
+        return res.status(409).json({ message: "Los pagos de esta cadena ya fueron registrados." });
+    }
+    const total = claimedPayments.reduce((sum, payment) => sum + payment.amount, 0);
 
     const brandName = root.brandName || root.brand?.name || "tu moto";
     await Notification.create({
         user: req.user.id,
         appointment: root._id,
         type: "payment_paid",
-        message: `Pago simulado registrado: $${total.toLocaleString("es-CO")} COP por ${pendingPayments.length} servicio(s) de la cadena de ${brandName} ${root.motorcycleModel}.`
+        message: `Pago simulado registrado: $${total.toLocaleString("es-CO")} COP por ${claimedPayments.length} servicio(s) de la cadena de ${brandName} ${root.motorcycleModel}.`
     });
 
     res.json({
         appointment: root._id,
         amount: total,
-        count: pendingPayments.length,
+        count: claimedPayments.length,
         status: "paid",
         paidAt
     });

@@ -1,80 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { IconRadar } from './Icons';
 import { T } from '../styles/tokens';
-
-function TerminalChat({ onBooking }) {
-  const [messages, setMessages] = useState([
-    { type: 'system', text: 'Hola, soy el asistente de MotoTaller. Puedo orientarte sobre nuestros servicios o ayudarte a dejar una solicitud para que el equipo te contacte.' },
-  ]);
-  const [inputVal, setInputVal] = useState('');
-  const [sending, setSending] = useState(false);
-  const msgRef = useRef(null);
-
-  useEffect(() => {
-    if (msgRef.current) msgRef.current.scrollTop = msgRef.current.scrollHeight;
-  }, [messages]);
-
-  const send = async () => {
-    const value = inputVal.trim();
-    if (!value || sending) return;
-    const history = messages
-      .filter(item => item.role && ['user', 'assistant'].includes(item.role))
-      .map(item => ({ role: item.role, content: item.text }))
-      .slice(-12);
-    setMessages(prev => [...prev, { type: 'user', role: 'user', text: value }]);
-    setInputVal('');
-    setSending(true);
-    try {
-      const response = await fetch('/api/chat/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: value, history })
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || 'No fue posible conectar con el asistente.');
-      setMessages(prev => [...prev, { type: 'system', role: 'assistant', text: result.reply }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { type: 'system', role: 'assistant', text: error.message || 'No fue posible conectar con el asistente. Intenta de nuevo.' }]);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="terminal-wrap">
-      <div className="terminal-header">
-        <div className="terminal-dot" style={{ background: '#ff5f57' }} />
-        <div className="terminal-dot" style={{ background: '#febc2e' }} />
-        <div className="terminal-dot" style={{ background: '#28c840' }} />
-        <div className="terminal-title">MOTO.TALLER - Asistente virtual</div>
-      </div>
-      <div className="terminal-messages" ref={msgRef} aria-live="polite" aria-label="Conversación con el asistente">
-        {messages.map((m, i) => (
-          <div key={i} className={`msg-${m.type}`}>{m.text}</div>
-        ))}
-        {sending && <div className="msg-system" role="status">Escribiendo...</div>}
-      </div>
-      <div className="terminal-input-row">
-          <input
-            className="terminal-input"
-            value={inputVal}
-            onChange={e => setInputVal(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
-            placeholder="Escribe tu pregunta..."
-            aria-label="Mensaje para el asistente"
-            maxLength={1200}
-            disabled={sending}
-          />
-          <button className="terminal-send" onClick={send} disabled={sending || !inputVal.trim()}>ENVIAR</button>
-      </div>
-      <div className="terminal-booking-action">
-        <span>¿Ya sabes qué servicio necesitas?</span>
-        <button type="button" className="terminal-booking-btn" onClick={onBooking}>AGENDAR CITA</button>
-      </div>
-      <p className="terminal-privacy-note">Tus mensajes se procesan con un proveedor de IA. Los datos de contacto solo se guardan si confirmas el envío de una solicitud.</p>
-    </div>
-  );
-}
 
 function WorkshopInfo() {
   const [showRadar, setShowRadar] = useState(false);
@@ -160,7 +86,7 @@ export function Contact({ onBooking }) {
         <p className="section-sub reveal">Ponte en contacto con nuestro equipo de ingenieros para programar tu servicio o consultar sobre preparaciones específicas de alto rendimiento.</p>
         <div className="contact-grid">
           <div className="reveal">
-            <TerminalChat onBooking={onBooking} />
+            <button type="button" className="btn-orange" onClick={onBooking}>AGENDAR CITA</button>
           </div>
           <div className="reveal">
             <WorkshopInfo />

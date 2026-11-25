@@ -64,6 +64,8 @@ export const navStyles = (T) => `
       text-align: center;
     }
     /* NAVBAR */
+    .nav-area-center { display: flex; }
+
     .nav-root {
       position: sticky;
       top: 0;

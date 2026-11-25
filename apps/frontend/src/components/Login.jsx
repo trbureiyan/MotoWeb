@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiErrorMessage, readApiResponse } from '../utils/api-response';
 
 export function Login({ onBack, onLogin, onRegister }) {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -17,11 +18,11 @@ export function Login({ onBack, onLogin, onRegister }) {
         credentials: 'include',
         body: JSON.stringify(form),
       });
-      const data = await response.json();
+      const data = await readApiResponse(response);
       if (!response.ok) throw new Error(data.message || data.error?.[0] || 'No fue posible iniciar sesión.');
       onLogin(data);
     } catch (requestError) {
-      setError(requestError.message || 'No se pudo conectar con el servidor.');
+      setError(apiErrorMessage(requestError));
     } finally {
       setLoading(false);
     }

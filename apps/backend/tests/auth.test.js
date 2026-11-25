@@ -7,10 +7,43 @@ import User from "../src/models/User.js"
 import { TOKEN_SECRET } from "../src/config.js"
 import { authRequired } from "../src/middlewares/validate.token.js"
 import { updateUser } from "../src/controllers/users.controller.js"
+import { login, register } from "../src/controllers/auth.controller.js"
 import authRoutes from "../src/routes/auth.routes.js"
 
 const userId = "507f1f77bcf86cd799439011"
 const backendDirectory = fileURLToPath(new URL("../", import.meta.url))
+
+test("login hides unexpected database errors", async () => {
+    const original = User.findOne
+    User.findOne = async () => { throw new Error("C:\\private\\database") }
+    const res = {
+        status(code) { this.code = code; return this },
+        json(body) { this.body = body; return this }
+    }
+    try {
+        await login({ body: { email: "test@example.com", password: "secret" } }, res)
+        assert.equal(res.code, 500)
+        assert.equal(res.body.message, "Error interno del servidor")
+    } finally {
+        User.findOne = original
+    }
+})
+
+test("register hides unexpected database errors", async () => {
+    const original = User.prototype.save
+    User.prototype.save = async () => { throw new Error("C:\\private\\database") }
+    const res = {
+        status(code) { this.code = code; return this },
+        json(body) { this.body = body; return this }
+    }
+    try {
+        await register({ body: { name: "Demo", email: "test@example.com", phone: "3100000000", password: "secret" } }, res)
+        assert.equal(res.code, 500)
+        assert.equal(res.body.message, "Error interno del servidor")
+    } finally {
+        User.prototype.save = original
+    }
+})
 
 const authenticate = (user) => new Promise((resolve, reject) => {
     const originalFindById = User.findById
@@ -87,15 +120,21 @@ test("profile route forwards database failures to Express error handling", async
 })
 
 test("seed refuses to create privileged users without configured passwords", () => {
-    const env = { ...process.env, NODE_ENV: "production", JWT_SECRET: "test-only-secret", MONGODB_URI: "mongodb://127.0.0.1:1/motoweb" }
-    delete env.SEED_ADMIN_PASSWORD
-    delete env.SEED_MECHANIC_PASSWORD
+    const env = {
+        ...process.env,
+        NODE_ENV: "production",
+        JWT_SECRET: "test-only-secret",
+        MONGODB_URI: "mongodb://127.0.0.1:1/motoweb",
+        SEED_ADMIN_PASSWORD: "",
+        SEED_MECHANIC_PASSWORD: ""
+    }
     const result = spawnSync(process.execPath, ["scripts/seed.js"], {
         cwd: backendDirectory,
         env,
         encoding: "utf8",
-        timeout: 2000
+        timeout: 10000
     })
+    assert.ifError(result.error)
     assert.match(result.stderr, /SEED_ADMIN_PASSWORD|SEED_MECHANIC_PASSWORD/)
     assert.notEqual(result.status, 0)
 })

@@ -2,5 +2,11 @@
   "buildCommand": "pnpm --filter moto.taller build",
   "outputDirectory": "apps/frontend/dist",
   "installCommand": "pnpm install",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://motoweb-api-27mx.onrender.com/api/:path*"
+    }
+  ]
 }

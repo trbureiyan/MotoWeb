@@ -4,9 +4,8 @@ import { useGSAP } from '@gsap/react';
 import { IconX } from './Icons';
 import { BrandLogo } from './BrandLogo';
 import { T } from '../styles/tokens';
+import { loadAvailableBrands } from '../utils/brands';
 
-const TARGET_BRANDS = ['DUCATI', 'BMW', 'KTM', 'YAMAHA', 'TRIUMPH', 'SUZUKI', 'HONDA', 'KAWASAKI', 'APRILIA'];
-const FALLBACK_BRANDS = TARGET_BRANDS.map(name => ({ name, slug: name.toLowerCase(), logoUrl: '' }));
 const MOTIVOS = ['DIAGNÓSTICO', 'REVISIÓN', 'MANTENIMIENTO PREVENTIVO'];
 const CUSTOM_BRAND = 'CUSTOM';
 
@@ -41,6 +40,7 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
   const [brandRequestError, setBrandRequestError] = useState('');
   const [brands, setBrands] = useState([]);
   const [loadingBrands, setLoadingBrands] = useState(false);
+  const [brandsError, setBrandsError] = useState('');
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -57,16 +57,20 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
     });
   }, { scope: modalRef });
 
-  useEffect(() => {
+  const refreshBrands = () => {
     setLoadingBrands(true);
-    fetch('/api/brands')
-      .then(r => r.json())
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) throw new Error('No hay marcas disponibles');
-        setBrands(data.filter(brand => brand.isActive !== false));
+    setBrandsError('');
+    loadAvailableBrands()
+      .then(setBrands)
+      .catch(() => {
+        setBrands([]);
+        setBrandsError('No fue posible cargar las marcas. Inténtalo de nuevo.');
       })
-      .catch(() => setBrands(FALLBACK_BRANDS))
       .finally(() => setLoadingBrands(false));
+  };
+
+  useEffect(() => {
+    refreshBrands();
   }, []);
 
   const update = (key, val) => {
@@ -84,7 +88,8 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
     if (step === 0) {
       if (!data.brand) return false;
       if (data.brand === CUSTOM_BRAND) return Boolean(data.brandRequestId && data.brandName);
-      return true;
+      if (loadingBrands || brandsError) return false;
+      return brands.some(brand => brand.slug === data.brand || brand.name === data.brand);
     }
     if (step === 1) {
       return MOTIVOS.includes(data.motivo);
@@ -216,6 +221,8 @@ export function BookingModal({ onClose, loggedInUser, onRequireLogin, initialDat
 
             {step === 0 && (
               <div>
+                {brandsError && <div role="alert">{brandsError} <button type="button" onClick={refreshBrands}>REINTENTAR</button></div>}
+                {!loadingBrands && !brandsError && brands.length === 0 && <p role="status">No hay marcas disponibles para reservar.</p>}
                 <div className="brand-grid">
                   {loadingBrands ? (
                     <div

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiErrorMessage, readApiResponse } from '../utils/api-response';
 
 export function Register({ onBack, onRegister, onLogin }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
@@ -17,11 +18,11 @@ export function Register({ onBack, onRegister, onLogin }) {
         credentials: 'include',
         body: JSON.stringify(form),
       });
-      const data = await response.json();
+      const data = await readApiResponse(response);
       if (!response.ok) throw new Error(data.message || data.error?.[0] || 'No fue posible crear la cuenta.');
       onRegister(data);
     } catch (requestError) {
-      setError(requestError.message || 'No se pudo conectar con el servidor.');
+      setError(apiErrorMessage(requestError));
     } finally {
       setLoading(false);
     }

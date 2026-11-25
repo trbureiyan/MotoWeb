@@ -32,7 +32,8 @@ export const register = async (req, res) => {
         })
     } catch (error) {
         if (error.code === 11000) return res.status(409).json({ message: "Ya existe una cuenta con ese correo." })
-        res.status(500).json({ message: error.message })
+        console.error(error)
+        res.status(500).json({ message: "Error interno del servidor" })
     }
 }
 
@@ -60,7 +61,8 @@ export const login = async (req, res) => {
             updatedAt: userFound.updatedAt
         })
     } catch (error) {
-        res.status(500).json({ message: error.message })
+        console.error(error)
+        res.status(500).json({ message: "Error interno del servidor" })
     }
 }
 

@@ -49,7 +49,7 @@ export function Navbar({ onBooking, isGallery, isNotifications, currentView, onB
   };
 
   return (
-    <nav className={`nav-root ${isGallery ? 'is-gallery' : ''}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 1000 }}>
+    <nav className={`nav-root${isGallery ? ' is-gallery' : ''}${isNotifications ? ' is-notifications' : ''}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 1000 }}>
       <div className="nav-area-left" style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
         {isGallery || isNotifications ? (
           <button className="btn-outline" onClick={onBack} style={{ fontSize: '0.65rem' }}>
@@ -62,7 +62,7 @@ export function Navbar({ onBooking, isGallery, isNotifications, currentView, onB
         )}
       </div>
 
-      <div className="nav-area-center" style={{ flex: 2, display: 'flex', justifyContent: 'center' }}>
+      <div className="nav-area-center" style={{ flex: 2, justifyContent: 'center' }}>
         {isGallery || isNotifications ? (
           <span style={{ fontWeight: 'bold', fontSize: '0.85rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
             {isGallery ? 'Galería de Fotos' : 'Citas y notificaciones'}

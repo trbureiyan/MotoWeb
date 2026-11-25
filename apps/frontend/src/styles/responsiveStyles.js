@@ -191,6 +191,7 @@ export const responsiveStyles = (T) => `
 
     @media (max-width: 480px) {
       .nav-root { height: 56px; padding: 0 0.75rem; }
+      .nav-root.is-notifications .nav-area-center { display: none; }
       .nav-logo { font-size: 1.05rem; }
       .nav-mobile-menu { top: 56px; padding: 0.75rem 1rem; }
       .nav-login-btn, .nav-icon-btn, .nav-notifications {
